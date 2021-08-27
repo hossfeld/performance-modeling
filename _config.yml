@@ -1,3 +1,4 @@
 title: Performance Modeling
-description: Jupyter Notebook scripts for the book Book "Performance Modeling and Analysis of Communication Networks" by Tran-Gia, P. & Hossfeld, T. (2021). Würzburg University Press. https://doi.org/10.25972/WUP-978-3-95826-153-2
+description: Jupyter Notebook scripts for the book "Performance Modeling and Analysis of Communication Networks" by Tran-Gia, P. & Hossfeld, T. (2021). Würzburg University Press. https://modelilng.systems
+logo: performance_modeling.png
 theme: jekyll-theme-minimal
