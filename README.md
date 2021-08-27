@@ -5,7 +5,7 @@ The text book "Performance Modeling and Analysis of Communication Networks" by T
 An implementation of the models in the book is available as interactive notebooks online. The scripts will help to better understand the impact of parameters on performance characteristics, will avoid common pitfalls in the implementation, and provide means for numerical robust and efficient implementations for researchers in the domain.
 
 Website of the book:
-https://modeling.systems
+<https://modeling.systems>
 
 ##  Copyright Notice
 The scripts are published under the license: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
