@@ -13991,14 +13991,14 @@ The following parameters are of interest:</p>
 <p>This system assumes it is in statistical equilibrium and the mean number of customers and the mean sojourn time are finite and exist. The so-called Little's theorem applies (or Little's formula, Little's law).</p>
 <p>$E[X] = \lambda \cdot E[T]$</p>
 <h2 id="Example:-Balking">Example: Balking<a class="anchor-link" href="#Example:-Balking">&#182;</a></h2><p>Consider now a system with customer impatience. A customer arrives and sees the system in state $i$, i.e. there are $i$ other customers in the system. With probability $1-p_i$ the arriving customer refuses to enter the queue e.g. due to too long waiting time. This means this customer balks from the queueing system. With probability $p_i$, the arriving customer joins the systems. This behavior can be observed in practice for example when the waiting line is too long in a supermarket, then some customers decided to not go shopping and do not enter the supermarket.</p>
-<p>We assume that the probability that the system is in state $i$ is</p>
-<p>$x(i)=P(X=i) = \binom{N}{i} \cdot \rho^i (1-\rho)^{N-i} $  for  $i = 0, \dots, N$.</p>
-<p>In other words: the system state $X$ (r.v.) follows a binomial distribution with parameters $N$ and $\rho$.</p>
-<p>$ X \sim \mathrm{BINOM}(N,\rho)$</p>
-<p>The probability $p_i$ that a customer joins in state $[X=i]$ is</p>
-<p>$p_i = \frac{1}{i+1}$.</p>
-<p>This creates state-dependent arrival rates. The system is in state $i$ with probability $x(i)$. The effective arrival rate $\lambda_i$ of customers entering the system when seeing $i$ other customers is</p>
-<p>$\lambda_i = \lambda \cdot p_i $.</p>
+<p>We assume that the probability that the system is in state $i$ is 
+$x(i)=P(X=i) = \binom{N}{i} \cdot \rho^i (1-\rho)^{N-i} $  for  $i = 0, \dots, N$.
+In other words: the system state $X$ (r.v.) follows a binomial distribution with parameters $N$ and $\rho$.
+$ X \sim \mathrm{BINOM}(N,\rho)$</p>
+<p>The probability $p_i$ that a customer joins in state $[X=i]$ is 
+$p_i = \frac{1}{i+1}$.
+This creates state-dependent arrival rates. The system is in state $i$ with probability $x(i)$. The effective arrival rate $\lambda_i$ of customers entering the system when seeing $i$ other customers is
+$\lambda_i = \lambda \cdot p_i $.</p>
 <p>Then, the mean arrival rate to the system is</p>
 <p>$\bar{\lambda} = \sum_{i=0}^\infty \lambda_i \cdot x(i) = \sum_{i=0}^\infty  \lambda\cdot p_i \cdot x(i) $ .</p>
 <p>It is</p>
