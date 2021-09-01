@@ -13991,16 +13991,16 @@ A work station processes a batch of jobs jointly (<em>batch service</em>). At mo
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Definition der Parameter</span>
-<span class="n">Theta</span> <span class="o">=</span> <span class="mi">3</span> <span class="c1"># Parameter a: Startschwelle - sobald X&gt;=a Jobs im System, startet der Batch-Bedienvorgang</span>
-<span class="n">K</span> <span class="o">=</span> <span class="mi">8</span>     <span class="c1"># Parameter b: maximale Größe der Batch, die bedient wird</span>
-<span class="n">S</span> <span class="o">=</span> <span class="mi">10</span>     <span class="c1"># Anzahl Warteplätze</span>
-<span class="n">cB</span> <span class="o">=</span> <span class="mi">0</span>    <span class="c1"># Variationskoeffizient der Bedienzeit</span>
-<span class="n">rho</span> <span class="o">=</span> <span class="mf">0.9</span> <span class="c1"># Auslastung des Systems</span>
+<span class="n">Theta</span> <span class="o">=</span> <span class="mi">3</span> <span class="c1"># threshold control</span>
+<span class="n">K</span> <span class="o">=</span> <span class="mi">8</span>     <span class="c1"># maximum batch size </span>
+<span class="n">S</span> <span class="o">=</span> <span class="mi">10</span>    <span class="c1"># number of waiting places</span>
+<span class="n">cB</span> <span class="o">=</span> <span class="mi">0</span>    <span class="c1"># coefficient of variation of the service time</span>
+<span class="n">rho</span> <span class="o">=</span> <span class="mf">0.9</span> <span class="c1"># normalized offered load</span>
 
-<span class="n">EB</span> <span class="o">=</span> <span class="mf">1.0</span>            <span class="c1"># mittlere Bedienzeit</span>
-<span class="n">mu</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">EB</span>       <span class="c1"># Bedienrate</span>
-<span class="n">lam</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">K</span> <span class="o">/</span> <span class="n">EB</span>  <span class="c1"># Ankunftsrate</span>
-<span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-16</span>     <span class="c1"># Power-Methode: Genauigkeit beim Vergleich der Mittelwerte</span>
+<span class="n">EB</span> <span class="o">=</span> <span class="mf">1.0</span>            <span class="c1"># mean service time</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">EB</span>       <span class="c1"># service rate</span>
+<span class="n">lam</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">K</span> <span class="o">/</span> <span class="n">EB</span>  <span class="c1"># arrival rate</span>
+<span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-16</span>     <span class="c1"># power method: accuracy when to stop iterations when comparing means</span>
 </pre></div>
 
      </div>
