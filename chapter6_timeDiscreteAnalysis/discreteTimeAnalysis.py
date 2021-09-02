@@ -28,6 +28,11 @@ which is defined through the mean and the coefficient of variation.
 >>> C.plotCDF(label='A+B') % plot the CDF of the sum of A+B
 
 
+Operators
+---------
+Overloaded operators
+
+
 Notes
 -----
 The theory behind the module is described in the book in Chapter 6. 
@@ -183,42 +188,55 @@ class DiscreteDistribution:
         print(f'{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} ')
 
     def checkDistribution(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        """Returns if the distribution is valid.         
+    
+        Returns
+        -------
+        bool
+            Return true if the distribution is valid. 
+            Returns false if e.g. the values of `xk` are not increasing or the sum of probabilities `pk` is less than 1.
+            
         """                
         increasing = np.all(np.diff(self.xk) > 0) # xk: strictly monotonic increasing
         sumOne = abs(np.sum(self.pk)-1)<1e-8 # xk: error
         return increasing and sumOne
+            
+    def conv(A,B,name=None):
+        """Returns the sum of the two distributions.
         
-    
-    def conv(A,B,name='A+B'):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
+        Returns the sum of the distribution `A` and the distribution `B`. Note that \( A+B=B+A \).
+        
+        
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        A : DiscreteDistribution
+            The first distribution of the sum.
+        B : DiscreteDistribution
+            The second distribution of the sum.
+            
+        Example
+        -------
+        >>> A = DU()
+        >>> A.conv(A) # returns A+A
+        >>> DiscreteDistribution.conv(A,A) # returns A+A
+        >>> A+A # returns A+A
+    
+        Returns
+        -------
+        DiscreteDistribution
+            Sum of the distributions: `A+B`.
+            
+        See also
+        --------
+        Whatsoever
+            
         """                
         pk = np.convolve(A.pk, B.pk)
         xk = np.arange(A.xmin+B.xmin, A.xmax+B.xmax+1)
-        return DiscreteDistribution(xk,pk,name=name)
+        return DiscreteDistribution(xk,pk,name=name)    
     
     def convNeg(A,B,name='A-B'):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        """Discrete distribution is initialized with value range `xk` and probabilities `pk`.
 
         Parameters
         ----------
