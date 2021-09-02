@@ -46,7 +46,7 @@ class DiscreteDistribution:
 
     A discrete distribution reflects a random variable \( X \) and is defined 
     by its probability mass function (PMF). The random variable can take discrete values
-    which are defined by the numpy array `xk`. The probability that the random variable
+    which are defined by the numpy array `xk` (sample space). The probability that the random variable
     takes a certain value is \( P(X=k)=p_k \). The probabilities are stored in the
     numpy array `pk`.
     
@@ -54,22 +54,28 @@ class DiscreteDistribution:
     Attributes
     ----------
     xk : numpy array
-        Values of the distribution.
+        Values of the distribution (sample space).
     pk : numpy array
-        Probabilities corresponding to the values: \( P(X=xk)=pk \).
+        Probabilities corresponding to the sample space.
     name : string
         Arbitrary name of that distribution. 
 
     """    
     
     def __init__(self, xk, pk, name='discrete distr.'):         
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        """A discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        
+        For the initialization of a discrete random variable, the sample space `xk` and the corresponding
+        probabilities `pk` are required. Both parameters are then stored as class attributes in form
+        of numpy array (one-dimensional). In addition, an arbitrary `name` can be passed to the
+        distribution which is used when printing an instance of the class, see e.g. 
+        `DiscreteDistribution.describe`.
 
         Parameters
         ----------
-        xk : numpy array
+        xk : numpy array or list
             Values of the distribution.
-        pk : numpy array
+        pk : numpy array or list
             Probabilities corresponding to the values: \( P(X=xk)=pk \).
         name : string, optional (default 'discrete distr.')
             Name of the distribution for string representation.
@@ -87,108 +93,93 @@ class DiscreteDistribution:
         self.name = name
         
     def mean(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        """Returns the mean value of the distribution \( E[X] \).
+    
+    
+        Returns
+        -------
+        float
+            Mean value.
+            
         """        
         return np.sum(self.xk*self.pk)
     
     def var(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        """Returns the variance of the distribution \( VAR[X] \).
+    
+    
+        Returns
+        -------
+        float
+            Variance of the distribution.
+            
         """                
         return np.sum(self.xk**2*self.pk)-self.mean()**2
     
     def std(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        """Returns the standard deviation of the distribution \( {STD}[X]=\sqrt{VAR[X]} \).
+    
+    
+        Returns
+        -------
+        float
+            Standard deviation of the distribution.
+            
         """                
         return math.sqrt(self.var())
     
     def cx(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+        """Returns the coefficient of the variation of the distribution \( c_X = STD[X]/E[X] \).
+    
+    
+        Returns
+        -------
+        float
+            Coefficient of variation of the distribution.
+            
+        """               
         return self.std()/self.mean()
     
     def mode(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        """Returns the mode of the distribution.
+    
+    
+        Returns
+        -------
+        float
+            Mode of the distribution.
+            
         """                
         return self.xk[np.argmax(self.pk)]
     
     def quantile(self, q=0.95):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
+        """Returns the q-quantile of the distribution.
+    
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        q : float, optional (default 0.95)
+            The parameter indicates that the q-quantile is derived. The default value is `q=0.95`
+            for the 95%-quantile. It must be ensured that \( 0< q < 1\).
+    
+        Returns
+        -------
+        float
+            q-Quantile (default 95%) of the distribution.
+            
         """                
         return self.xk[np.argmax(self.pk.cumsum()>q)]
     
     def describe(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+        """Prints basic characteristics of the distribution.        
+        
+        This method prints basic characteristics of the distribution.
+        
+        Example
+        -------
+        >>> A.describe()
+            interarrival_time: EX=5.5000, cX=0.5222, mode=1 
+                        
+        """               
         print(f'{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} ')
 
     def checkDistribution(self):
