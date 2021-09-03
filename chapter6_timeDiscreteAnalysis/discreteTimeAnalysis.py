@@ -30,7 +30,14 @@ which is defined through the mean and the coefficient of variation.
 
 Operators
 ---------
-Overloaded operators
+The module overloads the following operators, which make it convenient to implement comprehensive and well understandable code.
+
+`+` operator: The sum of two random variables means the convolution of their probability mass functions. 
+`A+B` calls the method `DiscreteDistribution.conv` and is identical to `A.conv(B)`, see the example above.
+
+`-` operator: The difference of two random variables means the convolution of their probability mass functions. 
+`A-B` calls the method `DiscreteDistribution.convNeg` and is identical to `A.convNeg(B)`.
+
 
 
 Notes
@@ -205,6 +212,123 @@ class DiscreteDistribution:
         """Returns the sum of the two distributions.
         
         Returns the sum of the distribution `A` and the distribution `B`. Note that \( A+B=B+A \).
+        The operator `+` is overloaded for that class, such that `A+B` is an abbreviation for `A.conv(B)`.
+        
+        
+        Parameters
+        ----------
+        A : DiscreteDistribution
+            The first distribution of the sum.
+        B : DiscreteDistribution
+            The second distribution of the sum.
+        name : string, optional (default 'A.name+B.name')
+            Name of the distribution for string representation.
+            
+        Example
+        -------
+        >>> A = DU()
+        >>> A.conv(A) # returns A+A
+        >>> DiscreteDistribution.conv(A,A) # returns A+A
+        >>> A+A # returns A+A
+    
+        Returns
+        -------
+        DiscreteDistribution
+            Sum of the distributions: `A+B`.
+                    
+        """                
+        s = f'{A.name}+{B.name}' if name is None else name     
+        pk = np.convolve(A.pk, B.pk)
+        xk = np.arange(A.xmin+B.xmin, A.xmax+B.xmax+1)
+        return DiscreteDistribution(xk,pk,name=s)    
+    
+    def convNeg(A,B,name=None):
+        """Returns the difference of the two distributions.
+        
+        Returns the difference of the distribution `A` and the distribution `B`. 
+        The operator `-` is overloaded for that class, such that `A-B` is an abbreviation for `A.convNeg(B)`.
+        
+        
+        Parameters
+        ----------
+        A : DiscreteDistribution
+            The first distribution of the difference.
+        B : DiscreteDistribution
+            The second distribution to be substracted from the first.
+        name : string, optional (default 'A.name-B.name')
+            Name of the distribution for string representation.
+            
+        Example
+        -------
+        >>> A = DU()
+        >>> A.convNeg(A) # returns A-A
+        >>> DiscreteDistribution.convNeg(A,A) # returns A-A
+        >>> A-A # returns A-A
+    
+        Returns
+        -------
+        DiscreteDistribution
+            Difference of the distributions: `A-B`.
+                    
+        """
+        s = f'{A.name}-{B.name}' if name is None else name     
+        pk = np.convolve(A.pk, B.pk[::-1])
+        xk = np.arange(A.xmin-B.xmax, A.xmax-B.xmin+1)
+        return DiscreteDistribution(xk,pk,name=s)
+        
+    def pi_op(A, m=0, name=None):        
+        """Applies the pi-operator and returns the resulting distribution.
+        
+        The pi-operator truncates a distribution at the point $X=m$. The probability mass \( P(X\leq m) \) is assigned
+        to the point \(X=m\), while all other probabilities are set to zero for \(X<m\). The default operation is 
+        to truncate all negative values and assigning the probability mass of negative values to \(X=0\). Hence, the default 
+        value is \(m=0\) and in this case \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
+        are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution (\(i>0 \)) is not changed.
+                                              
+        In general: \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\).                                     
+        
+        Parameters
+        ----------
+        A : DiscreteDistribution
+            The first distribution of the sum.
+        m : integer
+            The second distribution of the sum.
+        name : string, optional (default 'A.name+B.name')
+            Name of the distribution for string representation.
+            
+        Example
+        -------
+        >>> A = DU()
+        >>> A.conv(A) # returns A+A
+        >>> DiscreteDistribution.conv(A,A) # returns A+A
+        >>> A+A # returns A+A
+    
+        Returns
+        -------
+        DiscreteDistribution
+            Sum of the distributions: `A+B`.
+                    
+        """
+        s = f'pi_{m}({A.name})' if name is None else name     
+        if m <= A.xmin:
+            A.name = s
+            return A
+        elif m >= A.xmax:
+            return  DiscreteDistribution([m],[1],name=s)
+        else:
+            #s = f'pi_{m}({A.name})' if name is None else name        
+            k = np.searchsorted(A.xk,m)
+            xk = np.arange(m, A.xmax+1)
+            pk = np.zeros(len(xk))
+            pk[0] = np.sum(A.pk[0:k+1])
+            pk[1:] = A.pk[k+1:]
+            return DiscreteDistribution(xk,pk,name=s)        
+    
+    def pi0(A, name=None):
+        """Returns the sum of the two distributions.
+        
+        Returns the sum of the distribution `A` and the distribution `B`. Note that \( A+B=B+A \).
+        The operator `+` is overloaded for that class, such that `A+B` is an abbreviation for `A.conv(B)`.
         
         
         Parameters
@@ -225,73 +349,7 @@ class DiscreteDistribution:
         -------
         DiscreteDistribution
             Sum of the distributions: `A+B`.
-            
-        See also
-        --------
-        Whatsoever
-            
-        """                
-        pk = np.convolve(A.pk, B.pk)
-        xk = np.arange(A.xmin+B.xmin, A.xmax+B.xmax+1)
-        return DiscreteDistribution(xk,pk,name=name)    
-    
-    def convNeg(A,B,name='A-B'):
-        """Discrete distribution is initialized with value range `xk` and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
-        pk = np.convolve(A.pk, B.pk[::-1])
-        xk = np.arange(A.xmin-B.xmax, A.xmax-B.xmin+1)
-        return DiscreteDistribution(xk,pk,name=name)
-        
-    def pi_op(A, m=0, name=None):        
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
-        s = f'pi_{m}({A.name})' if name is None else name     
-        if m <= A.xmin:
-            A.name = s
-            return A
-        elif m >= A.xmax:
-            return  DiscreteDistribution([m],[1],name=s)
-        else:
-            #s = f'pi_{m}({A.name})' if name is None else name        
-            k = np.searchsorted(A.xk,m)
-            xk = np.arange(m, A.xmax+1)
-            pk = np.zeros(len(xk))
-            pk[0] = np.sum(A.pk[0:k+1])
-            pk[1:] = A.pk[k+1:]
-            return DiscreteDistribution(xk,pk,name=s)        
-    
-    def pi0(A, name=None):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+                    
         """                
         s = f'pi0({A.name})' if name is None else name
         return DiscreteDistribution.pi_op(A, m=0, name=s)
