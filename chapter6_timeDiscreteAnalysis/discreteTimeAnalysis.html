@@ -40,7 +40,7 @@ Würzburg University Press. <br>
 In the example, we consider the sum of two random variables, which requires the convolution of the corresponding probability mass functions.
 The r.v. A follows a discrete uniform distribution in the range [0;10], while the r.v. B follows a negative binomial distribution,
 which is defined through the mean and the coefficient of variation.</p>
-<pre><code class="python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
+<pre><code class="language-python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
 &gt;&gt;&gt; A = dt.DU(a=0, b=10) % A ~ DU(0,10)
 &gt;&gt;&gt; EX, cX = 2.0, 1.5   % mean EX and coefficient of variation cX
 &gt;&gt;&gt; B = dt.NEGBIN(EX, cX) % negative binomial distribution
@@ -1662,12 +1662,12 @@ A random variable $A$ is now constructed in such a way that with the probability
 <dd>Returns a shifted geometric distribution with mean EX.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DET(4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DET(4)
 &gt;&gt;&gt; B = DU(1,10)
 &gt;&gt;&gt; C = MIX( (A,B) )
 &gt;&gt;&gt; D = A+B
 </code></pre>
-<pre><code class="python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
+<pre><code class="language-python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
 &gt;&gt;&gt; A.plotCDF(label='A')
 &gt;&gt;&gt; B.plotCDF(label='B')
 &gt;&gt;&gt; C.plotCDF(label='MIX')
@@ -3012,7 +3012,7 @@ The operator <code>+</code> is overloaded for that class, such that <code>A+B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.conv(A) # returns A+A
 &gt;&gt;&gt; DiscreteDistribution.conv(A,A) # returns A+A
 &gt;&gt;&gt; A+A # returns A+A
@@ -3074,7 +3074,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.convNeg(A) # returns A-A
 &gt;&gt;&gt; DiscreteDistribution.convNeg(A,A) # returns A-A
 &gt;&gt;&gt; A-A # returns A-A
@@ -3156,7 +3156,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 </p>
 <p>This method prints basic characteristics of the distribution.</p>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A.describe()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A.describe()
     interarrival_time: EX=5.5000, cX=0.5222, mode=1
 </code></pre></div>
 <details class="source">
