@@ -54,7 +54,7 @@ import matplotlib.pyplot as plt
 import math
 #%%    
 class DiscreteDistribution:
-    """The class implements finite discrete distributions representing discrete random variables.
+    r"""The class implements finite discrete distributions representing discrete random variables.
 
     A discrete distribution reflects a random variable \( X \) and is defined 
     by its probability mass function (PMF). The random variable can take discrete values
@@ -75,7 +75,7 @@ class DiscreteDistribution:
     """    
     
     def __init__(self, xk, pk, name='discrete distr.'):         
-        """A discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""A discrete distribution is initialized with value range `xk`and probabilities `pk`.
         
         For the initialization of a discrete random variable, the sample space `xk` and the corresponding
         probabilities `pk` are required. Both parameters are then stored as class attributes in form
@@ -105,7 +105,7 @@ class DiscreteDistribution:
         self.name = name
         
     def mean(self):
-        """Returns the mean value of the distribution \( E[X] \).
+        r"""Returns the mean value of the distribution \( E[X] \).
     
     
         Returns
@@ -117,7 +117,7 @@ class DiscreteDistribution:
         return np.sum(self.xk*self.pk)
     
     def var(self):
-        """Returns the variance of the distribution \( VAR[X] \).
+        r"""Returns the variance of the distribution \( VAR[X] \).
     
     
         Returns
@@ -129,7 +129,7 @@ class DiscreteDistribution:
         return np.sum(self.xk**2*self.pk)-self.mean()**2
     
     def std(self):
-        """Returns the standard deviation of the distribution \( {STD}[X]=\sqrt{VAR[X]} \).
+        r"""Returns the standard deviation of the distribution \( {STD}[X]=\sqrt{VAR[X]} \).
     
     
         Returns
@@ -141,7 +141,7 @@ class DiscreteDistribution:
         return math.sqrt(self.var())
     
     def cx(self):
-        """Returns the coefficient of the variation of the distribution \( c_X = STD[X]/E[X] \).
+        r"""Returns the coefficient of the variation of the distribution \( c_X = STD[X]/E[X] \).
     
     
         Returns
@@ -153,7 +153,7 @@ class DiscreteDistribution:
         return self.std()/self.mean()
     
     def mode(self):
-        """Returns the mode of the distribution.
+        r"""Returns the mode of the distribution.
     
     
         Returns
@@ -165,7 +165,7 @@ class DiscreteDistribution:
         return self.xk[np.argmax(self.pk)]
     
     def quantile(self, q=0.95):
-        """Returns the q-quantile of the distribution.
+        r"""Returns the q-quantile of the distribution.
     
         Parameters
         ----------
@@ -182,7 +182,7 @@ class DiscreteDistribution:
         return self.xk[np.argmax(self.pk.cumsum()>q)]
     
     def describe(self):
-        """Prints basic characteristics of the distribution.        
+        r"""Prints basic characteristics of the distribution.        
         
         This method prints basic characteristics of the distribution.
         
@@ -195,7 +195,7 @@ class DiscreteDistribution:
         print(f'{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} ')
 
     def checkDistribution(self):
-        """Returns if the distribution is valid.         
+        r"""Returns if the distribution is valid.         
     
         Returns
         -------
@@ -208,20 +208,18 @@ class DiscreteDistribution:
         sumOne = abs(np.sum(self.pk)-1)<1e-8 # xk: error
         return increasing and sumOne
             
-    def conv(A,B,name=None):
-        """Returns the sum of the two distributions.
+    def conv(self, other,name=None):
+        r"""Returns the sum of this distributions and another distribution.
         
-        Returns the sum of the distribution `A` and the distribution `B`. Note that \( A+B=B+A \).
+        Returns the sum of this distribution and the other distribution. Note that \( A+B=B+A \).
         The operator `+` is overloaded for that class, such that `A+B` is an abbreviation for `A.conv(B)`.
         
         
         Parameters
         ----------
-        A : DiscreteDistribution
-            The first distribution of the sum.
-        B : DiscreteDistribution
-            The second distribution of the sum.
-        name : string, optional (default 'A.name+B.name')
+        other : DiscreteDistribution
+            The other distribution of the sum.
+        name : string, optional (default 'self.name+other.name')
             Name of the distribution for string representation.
             
         Example
@@ -234,27 +232,25 @@ class DiscreteDistribution:
         Returns
         -------
         DiscreteDistribution
-            Sum of the distributions: `A+B`.
+            Sum of the distributions: `self+other`.
                     
         """                
-        s = f'{A.name}+{B.name}' if name is None else name     
-        pk = np.convolve(A.pk, B.pk)
-        xk = np.arange(A.xmin+B.xmin, A.xmax+B.xmax+1)
+        s = f'{self.name}+{other.name}' if name is None else name     
+        pk = np.convolve(self.pk, other.pk)
+        xk = np.arange(self.xmin+other.xmin, self.xmax+other.xmax+1)
         return DiscreteDistribution(xk,pk,name=s)    
     
-    def convNeg(A,B,name=None):
-        """Returns the difference of the two distributions.
+    def convNeg(self, other, name=None):
+        r"""Returns the difference of two distributions.
         
-        Returns the difference of the distribution `A` and the distribution `B`. 
+        Returns the difference of this distribution and the other distribution. 
         The operator `-` is overloaded for that class, such that `A-B` is an abbreviation for `A.convNeg(B)`.
         
         
         Parameters
         ----------
-        A : DiscreteDistribution
-            The first distribution of the difference.
         B : DiscreteDistribution
-            The second distribution to be substracted from the first.
+            The other distribution to be substracted from this distribution.
         name : string, optional (default 'A.name-B.name')
             Name of the distribution for string representation.
             
@@ -268,20 +264,21 @@ class DiscreteDistribution:
         Returns
         -------
         DiscreteDistribution
-            Difference of the distributions: `A-B`.
+            Difference of the distributions: `self-other`.
                     
         """
-        s = f'{A.name}-{B.name}' if name is None else name     
-        pk = np.convolve(A.pk, B.pk[::-1])
-        xk = np.arange(A.xmin-B.xmax, A.xmax-B.xmin+1)
+        s = f'{self.name}-{other.name}' if name is None else name     
+        pk = np.convolve(self.pk, other.pk[::-1])
+        xk = np.arange(self.xmin-other.xmax, self.xmax-other.xmin+1)
         return DiscreteDistribution(xk,pk,name=s)
         
-    def pi_op(A, m=0, name=None):        
-        """Applies the pi-operator and returns the resulting distribution.
+    def pi_op(self, m=0, name=None):        
+        r"""Applies the pi-operator (summing up probabilities to m) and returns the resulting distribution.
         
-        The pi-operator truncates a distribution at the point $X=m$. The probability mass \( P(X\leq m) \) is assigned
+        The pi-operator truncates a distribution at the point $X=m$ and sums up the probabilities. 
+        The probability mass \( P(X\leq m) \) is assigned
         to the point \(X=m\), while all other probabilities are set to zero for \(X<m\). The default operation is 
-        to truncate all negative values and assigning the probability mass of negative values to \(X=0\). Hence, the default 
+        to delete all negative values and assigning the probability mass of negative values to \(X=0\). Hence, the default 
         value is \(m=0\) and in this case \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
         are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution (\(i>0 \)) is not changed.
                                               
@@ -289,127 +286,111 @@ class DiscreteDistribution:
         
         Parameters
         ----------
-        A : DiscreteDistribution
-            The first distribution of the sum.
         m : integer
             The second distribution of the sum.
-        name : string, optional (default 'A.name+B.name')
+        name : string, optional (default 'pi_m(self.name)')
             Name of the distribution for string representation.
             
-        Example
-        -------
-        >>> A = DU()
-        >>> A.conv(A) # returns A+A
-        >>> DiscreteDistribution.conv(A,A) # returns A+A
-        >>> A+A # returns A+A
-    
         Returns
         -------
         DiscreteDistribution
-            Sum of the distributions: `A+B`.
+            Truncated distribution.
                     
         """
-        s = f'pi_{m}({A.name})' if name is None else name     
-        if m <= A.xmin:
-            A.name = s
-            return A
-        elif m >= A.xmax:
+        s = f'pi_{m}({self.name})' if name is None else name     
+        if m <= self.xmin:
+            self.name = s
+            return self
+        elif m >= self.xmax:
             return  DiscreteDistribution([m],[1],name=s)
         else:
             #s = f'pi_{m}({A.name})' if name is None else name        
-            k = np.searchsorted(A.xk,m)
-            xk = np.arange(m, A.xmax+1)
+            k = np.searchsorted(self.xk,m)
+            xk = np.arange(m, self.xmax+1)
             pk = np.zeros(len(xk))
-            pk[0] = np.sum(A.pk[0:k+1])
-            pk[1:] = A.pk[k+1:]
+            pk[0] = np.sum(self.pk[0:k+1])
+            pk[1:] = self.pk[k+1:]
             return DiscreteDistribution(xk,pk,name=s)        
     
-    def pi0(A, name=None):
-        """Returns the sum of the two distributions.
+    def pi0(self, name=None):
+        r"""Applies the pi-operator (truncation of negative values, summing up probabilities ) and returns the resulting distribution.
         
-        Returns the sum of the distribution `A` and the distribution `B`. Note that \( A+B=B+A \).
-        The operator `+` is overloaded for that class, such that `A+B` is an abbreviation for `A.conv(B)`.
-        
-        
+        The pi0-operator truncates the distribution at 0 and sums up the probabilities.  The probability mass of negative values is assigned to 0. 
+        It is \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
+        are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution (\(i>0 \)) is not changed.
+                                              
         Parameters
         ----------
-        A : DiscreteDistribution
-            The first distribution of the sum.
-        B : DiscreteDistribution
-            The second distribution of the sum.
+        name : string, optional (default 'pi0(self.name)')
+            Name of the distribution for string representation.
             
-        Example
-        -------
-        >>> A = DU()
-        >>> A.conv(A) # returns A+A
-        >>> DiscreteDistribution.conv(A,A) # returns A+A
-        >>> A+A # returns A+A
-    
         Returns
         -------
         DiscreteDistribution
-            Sum of the distributions: `A+B`.
-                    
-        """                
-        s = f'pi0({A.name})' if name is None else name
-        return DiscreteDistribution.pi_op(A, m=0, name=s)
+            Truncated distribution.
+
+        See also
+        -------
+        Generalized truncation `DiscreteDistribution.pi_op`
+        """
+
+        s = f'pi0({self.name})' if name is None else name
+        return self.pi_op(m=0, name=s)
     
-    # remove trailing zero probs, shorten vector
-    # the distribution A is changed
-    def trim(A):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
+    def trim(self):
+        r"""Remove trailing and leading diminishing probabilities. 
+        
+        The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
+        any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
 
+        Returns
+        -------
+        None
         """                
-        m = A.pk!=0        
+        m = self.pk!=0        
         kmin = m.argmax()
         kmax = m.size - m[::-1].argmax()-1
         
         #A.xmin = np.min(xk)
         #A.xmax = np.max(xk)        
         
-        A.xk = A.xk[kmin:kmax+1]
-        A.pk = A.pk[kmin:kmax+1]
+        self.xk = self.xk[kmin:kmax+1]
+        self.pk = self.pk[kmin:kmax+1]
         
-        A.xmin = A.xk[0]
-        A.xmax = A.xk[-1]
+        self.xmin = self.xk[0]
+        self.xmax = self.xk[-1]
         return 
     
-    # remove trailing zero probs, shorten vector
-    # the distribution A is changed
-    def trimEps(A, eps=1e-8):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+    def trimEps(self, eps=1e-8):
+        r"""Remove trailing and leading diminishing probabilities below a certain threshold. 
+        
+        The trimEps-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
+        any leading and any trailing diminishing probabilities which are less than `eps`. 
+        This distribution object is therefore changed.
 
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
+        eps : float
+            Threshold which leading or trailing probabilities are to be removed.
+            
+        Returns
+        -------
+        None        
 
         """                
-        m = A.pk>eps #!=0        
+        m = self.pk>eps #!=0        
         kmin = m.argmax()
         kmax = m.size - m[::-1].argmax()-1
         
         #A.xmin = np.min(xk)
         #A.xmax = np.max(xk)        
         
-        A.xk = A.xk[kmin:kmax+1]
-        A.pk = A.pk[kmin:kmax+1]
+        self.xk = self.xk[kmin:kmax+1]
+        self.pk = self.pk[kmin:kmax+1]
         
-        A.xmin = A.xk[0]
-        A.xmax = A.xk[-1]
+        self.xmin = self.xk[0]
+        self.xmax = self.xk[-1]
         return 
     
     
@@ -417,16 +398,38 @@ class DiscreteDistribution:
     # conditional distribution if normalized
     # sigmaLT = sigma^m: takes the lower part ( k < m ) of a distribution
     def sigmaLT(self, m=0, name=None, normalized=True):        
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Applies the sigma-operator and returns the result.
+        
+        The sigma-operator returns the lower or the upper part of the distribution. 
+        `sigmaLT` implements the \(\sigma^m\)-operator which sweeps away the upper part (\(k\geq m\)) 
+        and takes the lower part (\(k < m \)). The distribution is therefore truncated. 
+        The results of these operations are unnormalized distributions where the sum of the probabilities
+        is less than one:
+        $$\sigma^m[x(k)] = 
+		\begin{cases}
+		x(k) & k<m \\
+		0 & k \geq m 
+        \end{cases}
+        $$
 
+        The parameter `normalized` (default True) indicates that a normalized distribution
+        (conditional random variable) is returned, such that the sum of probabilities is one.
+        The parameter `m` indicates at which point the distribution is truncated.
+        
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
+        m : integer
+            Truncation point. The lower part (\(k < m \)) of the distribution is taken.        
+        name : string, optional (default 'sigma^{m}({self.name})')
             Name of the distribution for string representation.
+        normalized : bool
+            If true returns a normalized distribution. If false the original probabilities for the 
+            truncated range are returned. 
+            
+        Returns
+        -------
+        DiscreteDistribution
+            Returns normalized or unnormalized truncated distribution taking probabilities for (\(k < m \)).            
 
         """                
         #assert m<xk[-1]
@@ -453,18 +456,41 @@ class DiscreteDistribution:
     # this is an unnormalized distribution: 
     # conditional distribution if normalized
     def sigmaGEQ(self, m=0, name=None, normalized=True):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Applies the sigma-operator and returns the result.
+        
+        The sigma-operator returns the lower or the upper part of the distribution. 
+        `sigmaGEQ` implements the \(\sigma_m\)-operator which sweeps away the lower part (\(k < m \)) 
+        and takes the upper part (\( k \geq m \)). The distribution is therefore truncated. 
+        The results of these operations are unnormalized distributions where the sum of the probabilities
+        is less than one:
+        $$    
+        \sigma_m[x(k)] = 
+		\begin{cases}
+		0 & k<m \\
+		x(k) & k \geq m
+		\end{cases} 
+        $$
 
+        The parameter `normalized` (default True) indicates that a normalized distribution
+        (conditional random variable) is returned, such that the sum of probabilities is one.
+        The parameter `m` indicates at which point the distribution is truncated.
+        
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
+        m : integer
+            Truncation point. The upper part (\(k\geq m\)) of the distribution is taken.        
+        name : string, optional (default 'sigma_{m}({self.name})')
             Name of the distribution for string representation.
+        normalized : bool
+            If true returns a normalized distribution. If false the original probabilities for the 
+            truncated range are returned. 
+            
+        Returns
+        -------
+        DiscreteDistribution
+            Returns normalized or unnormalized truncated distribution taking probabilities for (\(k \geq m \)).            
 
-        """                
+        """
         s = f'sigma_{m}({self.name})' if name is None else name     
         #assert m>=self.xk[0]
         if m>self.xk[-1]:
@@ -484,7 +510,7 @@ class DiscreteDistribution:
         return DiscreteDistribution(xk, pk, name=s)
     
     def pmf(self, xi):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -512,7 +538,7 @@ class DiscreteDistribution:
         return mypk
     
     def plotCDF(self,  addZero=True, **kwargs):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -536,7 +562,7 @@ class DiscreteDistribution:
         plt.step(x, Y, '.-', where='post', **kwargs)
         
     def plotPMF(self,  **kwargs):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -551,7 +577,7 @@ class DiscreteDistribution:
         plt.plot(self.xk, self.pk, '.-', **kwargs)        
         
     def conditionalRV(self, condition):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -568,7 +594,7 @@ class DiscreteDistribution:
     
     # A+B
     def __add__(self, other): 
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -584,7 +610,7 @@ class DiscreteDistribution:
     
     # A-C
     def __sub__(self, other): 
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -600,7 +626,7 @@ class DiscreteDistribution:
     
     # A<B: based on means
     def __lt__(self, other):        
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -615,7 +641,7 @@ class DiscreteDistribution:
         return self.mean() < other.mean()
     
     def __le__(self, other):        
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -630,7 +656,7 @@ class DiscreteDistribution:
         return self.mean() <= other.mean()
     
     def __eq__(self, other):        
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -646,7 +672,7 @@ class DiscreteDistribution:
         return np.all(self.xk==other.xk) and np.all(self.pk==other.pk)
     
     def __repr__(self):
-        """Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
 
         Parameters
         ----------
@@ -667,7 +693,7 @@ class DiscreteDistribution:
             return f'{self.name}: xk={self.xmin},...,{self.xmax}, pk={self.pk[0]:g},...,{self.pk[-1]:g}'
     
 def pi_op(A, m=0, name=None):    
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -688,7 +714,7 @@ def pi_op(A, m=0, name=None):
     return DiscreteDistribution.pi_op(A,m,name)
 
 def pi0(A, name=None):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -709,7 +735,7 @@ def pi0(A, name=None):
     return DiscreteDistribution.pi0(A, name=name)    
 
 def conv(A,B,name='A+B'):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -733,7 +759,7 @@ def conv(A,B,name='A+B'):
 
 
 def plotCDF(A, addZero=True, **kwargs):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -755,7 +781,7 @@ def plotCDF(A, addZero=True, **kwargs):
     
 
 def gg1_waitingTime(W0, C, epsMean=1e-4, epsProb=1e-16):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -787,7 +813,7 @@ def gg1_waitingTime(W0, C, epsMean=1e-4, epsProb=1e-16):
         
     
 def kingman(rho, cA, cB, EB):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -818,7 +844,7 @@ def kingman(rho, cA, cB, EB):
 from scipy.stats import nbinom, geom
 
 def getNegBinPars(mu,cx):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -841,7 +867,7 @@ def getNegBinPars(mu,cx):
 
 
 def NEGBIN(EX,cx, eps=1e-8):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -868,7 +894,7 @@ def NEGBIN(EX,cx, eps=1e-8):
     return DiscreteDistribution(x, pk/pk.sum())
 
 def DET(EX, name=None):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -889,7 +915,7 @@ def DET(EX, name=None):
     return DiscreteDistribution([EX], [1.0], name=name)
     
 def DU(a=1, b=10, name=None):    
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -913,7 +939,7 @@ def DU(a=1, b=10, name=None):
     return DiscreteDistribution(xk, np.array([pk]*n), name=name)    
 
 def GEOM(EX, m=0, eps=1e-8, name=None):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -940,7 +966,7 @@ def GEOM(EX, m=0, eps=1e-8, name=None):
 
 #%% substitute distribution
 def substiteDistribution(EX, cX, name=None):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -965,7 +991,7 @@ def substiteDistribution(EX, cX, name=None):
     
 #%% mixture distribution
 def MIX(A,  w, name=None):
-    """Example function with types documented in the docstring.
+    r"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
