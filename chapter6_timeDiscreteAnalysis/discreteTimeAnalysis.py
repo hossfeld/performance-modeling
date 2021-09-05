@@ -38,8 +38,26 @@ The module overloads the following operators, which make it convenient to implem
 `-` operator: The difference of two random variables means the convolution of their probability mass functions. 
 `A-B` calls the method `DiscreteDistribution.convNeg` and is identical to `A.convNeg(B)`.
 
+`<` operator: The comparison is done based on means. Returns true if `A.mean() < B.mean()`
 
+`<=` operator: The comparison is done based on means. Returns true if `A.mean() <= B.mean()`
 
+`>` operator: The comparison is done based on means. Returns true if `A.mean() > B.mean()`
+
+`>=` operator: The comparison is done based on means. Returns true if `A.mean() >= B.mean()`
+
+'==' operator: The comparison is done based on means. For the equality comparison, the
+threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
+Returns true if `abs( A.mean() - B.mean() ) <= comparisonEQ_eps`. This allows a compact
+implementation of the power method.
+
+'!=' operator: The comparison is done based on means. For the equality comparison, the
+threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
+Returns true if `abs( A.mean() - B.mean() ) > comparisonEQ_eps`. This allows a compact
+implementation of the power method.
+
+'|' operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+ 
 Notes
 -----
 The theory behind the module is described in the book in Chapter 6. 
@@ -52,6 +70,13 @@ The text book is published as open access book and can be downloaded at
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+
+comparisonEQ_eps = 1e-6
+"""The variable is used for the numerical comparison of two random variables `A`and `B`. 
+The comparison `A==B` returns true if `abs( A.mean() - B.mean() ) <= comparisonEQ_eps`. 
+
+"""
+
 #%%    
 class DiscreteDistribution:
     r"""The class implements finite discrete distributions representing discrete random variables.
@@ -275,19 +300,29 @@ class DiscreteDistribution:
     def pi_op(self, m=0, name=None):        
         r"""Applies the pi-operator (summing up probabilities to m) and returns the resulting distribution.
         
-        The pi-operator truncates a distribution at the point $X=m$ and sums up the probabilities. 
+        The pi-operator truncates a distribution at the point \(X=m\) and sums up the probabilities. 
         The probability mass \( P(X\leq m) \) is assigned
         to the point \(X=m\), while all other probabilities are set to zero for \(X<m\). The default operation is 
-        to delete all negative values and assigning the probability mass of negative values to \(X=0\). Hence, the default 
-        value is \(m=0\) and in this case \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
-        are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution (\(i>0 \)) is not changed.
+        to delete all negative values and assigning the probability mass of negative values to \(X=0\). 
+        Hence, the default value is \(m=0\) and in this case \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
+        are set to zero \(P(X'= i ) = 0, \forall i<0\) for the resulting distribution \(X'\). The rest of the distribution \(i>0 \) is not changed.
                                               
-        In general: \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\).                                     
+        In general: \(P(X'=0 ) = \sum_{i=-\infty}^m P(X=i)\). Hence, for a distribution \(x(k)=P(X=k) \), 
+        the pi-operator works as follows:
+
+        $$
+        \pi_m \Big(x(k)\Big)  =  \begin{cases}
+                0 & k < m \\
+                \sum\limits_{i = - \infty}^m
+                   x(i) & k= m \\
+                x(k) & k > m \\
+        \end{cases} 
+        $$                              
         
         Parameters
         ----------
         m : integer
-            The second distribution of the sum.
+            The truncation point at which probabilities are summed up.
         name : string, optional (default 'pi_m(self.name)')
             Name of the distribution for string representation.
             
@@ -316,8 +351,17 @@ class DiscreteDistribution:
         r"""Applies the pi-operator (truncation of negative values, summing up probabilities ) and returns the resulting distribution.
         
         The pi0-operator truncates the distribution at 0 and sums up the probabilities.  The probability mass of negative values is assigned to 0. 
-        It is \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
-        are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution (\(i>0 \)) is not changed.
+        For the resulting distribution \(X'\), it is \(P(X'=0 ) = \sum_{i=-\infty}^0 P(X=i)\), while the probabilites for all negative values 
+        are set to zero \(P(X'= i ) = 0, \forall i<0\). The rest of the distribution \(i>0 \) is not changed.
+                            
+        $$
+        \pi_0 \Big(x(k)\Big)  =  \begin{cases}
+                0 & k < 0 \\
+                \sum\limits_{i = - \infty}^0
+                   x(i) & k= 0 \\
+                x(k) & k > 0 \\
+        \end{cases} 
+        $$
                                               
         Parameters
         ----------
@@ -337,18 +381,21 @@ class DiscreteDistribution:
         s = f'pi0({self.name})' if name is None else name
         return self.pi_op(m=0, name=s)
     
-
-    def trim(self):
-        r"""Remove trailing and leading diminishing probabilities. 
+    def _trim(self, m):
+        r"""Truncates the distribution from left and right side. 
         
-        The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
-        any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+        The operation uses the minimum and maximum of the values m and truncates the distribution to 
+        this range. It changes the value range `xk` and the corresponding probabilities `pk`.
 
+        Parameters
+        ----------
+        m : numpy array of boolean values
+            The first and the last True value in the array are used to truncate the distribution.
+            
         Returns
         -------
         None
-        """                
-        m = self.pk!=0        
+        """                      
         kmin = m.argmax()
         kmax = m.size - m[::-1].argmax()-1
         
@@ -360,12 +407,26 @@ class DiscreteDistribution:
         
         self.xmin = self.xk[0]
         self.xmax = self.xk[-1]
+        return
+    
+    def trim(self):
+        r"""Remove trailing and leading diminishing probabilities. 
+        
+        The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
+        any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+
+        Returns
+        -------
+        None
+        """                
+        m = self.pk!=0        
+        self._trim(m)
         return 
     
-    def trimEps(self, eps=1e-8):
+    def trimPMF(self, eps=1e-8):
         r"""Remove trailing and leading diminishing probabilities below a certain threshold. 
         
-        The trimEps-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
+        The trimPMF-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
         any leading and any trailing diminishing probabilities which are less than `eps`. 
         This distribution object is therefore changed.
 
@@ -380,29 +441,39 @@ class DiscreteDistribution:
 
         """                
         m = self.pk>eps #!=0        
-        kmin = m.argmax()
-        kmax = m.size - m[::-1].argmax()-1
+        self._trim(m)
+        return
+    
+    def trimCDF(self, eps=1e-8):
+        r"""Remove trailing and leading diminishing cumulative probabilities below a certain threshold. 
         
-        #A.xmin = np.min(xk)
-        #A.xmax = np.max(xk)        
-        
-        self.xk = self.xk[kmin:kmax+1]
-        self.pk = self.pk[kmin:kmax+1]
-        
-        self.xmin = self.xk[0]
-        self.xmax = self.xk[-1]
-        return 
+        The trimCDF-operation changes the value range `xk` and the corresponding probabilities `pk` 
+        by removing any leading and any trailing diminishing cumulative probabilities which are less than `eps`. 
+        This distribution object is therefore changed.
+
+        Parameters
+        ----------
+        eps : float
+            Threshold which leading or trailing cumulative probabilities are to be removed.
+            
+        Returns
+        -------
+        None        
+        """                
+        m = self.pk.cumsum()>eps #!=0        
+        self._trim(m)
+        return    
     
     
     # this is an unnormalized distribution: 
     # conditional distribution if normalized
     # sigmaLT = sigma^m: takes the lower part ( k < m ) of a distribution
-    def sigmaLT(self, m=0, name=None, normalized=True):        
+    def sigmaTakeLT(self, m=0, name=None, normalized=True):        
         r"""Applies the sigma-operator and returns the result.
         
         The sigma-operator returns the lower or the upper part of the distribution. 
-        `sigmaLT` implements the \(\sigma^m\)-operator which sweeps away the upper part (\(k\geq m\)) 
-        and takes the lower part (\(k < m \)). The distribution is therefore truncated. 
+        `sigmaTakeLT` implements the \(\sigma^m\)-operator which sweeps away the upper part \(k\geq m\) 
+        and takes the lower part \(k < m \). The distribution is therefore truncated. 
         The results of these operations are unnormalized distributions where the sum of the probabilities
         is less than one:
         $$\sigma^m[x(k)] = 
@@ -419,7 +490,7 @@ class DiscreteDistribution:
         Parameters
         ----------
         m : integer
-            Truncation point. The lower part (\(k < m \)) of the distribution is taken.        
+            Truncation point. The lower part \(k < m \) of the distribution is taken.        
         name : string, optional (default 'sigma^{m}({self.name})')
             Name of the distribution for string representation.
         normalized : bool
@@ -429,8 +500,13 @@ class DiscreteDistribution:
         Returns
         -------
         DiscreteDistribution
-            Returns normalized or unnormalized truncated distribution taking probabilities for (\(k < m \)).            
+            Returns normalized or unnormalized truncated distribution taking probabilities for \(k < m \).            
 
+        Raises
+        ------
+        ValueError
+            If m is less than the smallest value xmin of this distribution. 
+            
         """                
         #assert m<xk[-1]
         s = f'sigma^{m}({self.name})' if name is None else name     
@@ -455,12 +531,12 @@ class DiscreteDistribution:
     
     # this is an unnormalized distribution: 
     # conditional distribution if normalized
-    def sigmaGEQ(self, m=0, name=None, normalized=True):
+    def sigmaTakeGEQ(self, m=0, name=None, normalized=True):
         r"""Applies the sigma-operator and returns the result.
         
         The sigma-operator returns the lower or the upper part of the distribution. 
-        `sigmaGEQ` implements the \(\sigma_m\)-operator which sweeps away the lower part (\(k < m \)) 
-        and takes the upper part (\( k \geq m \)). The distribution is therefore truncated. 
+        `sigmaTakeGEQ` implements the \(\sigma_m\)-operator which sweeps away the lower part \(k < m \) 
+        and takes the upper part \( k \geq m \). The distribution is therefore truncated. 
         The results of these operations are unnormalized distributions where the sum of the probabilities
         is less than one:
         $$    
@@ -478,7 +554,7 @@ class DiscreteDistribution:
         Parameters
         ----------
         m : integer
-            Truncation point. The upper part (\(k\geq m\)) of the distribution is taken.        
+            Truncation point. The upper part \(k\geq m\) of the distribution is taken.        
         name : string, optional (default 'sigma_{m}({self.name})')
             Name of the distribution for string representation.
         normalized : bool
@@ -488,7 +564,7 @@ class DiscreteDistribution:
         Returns
         -------
         DiscreteDistribution
-            Returns normalized or unnormalized truncated distribution taking probabilities for (\(k \geq m \)).            
+            Returns normalized or unnormalized truncated distribution taking probabilities for \(k \geq m \).
 
         """
         s = f'sigma_{m}({self.name})' if name is None else name     
@@ -510,17 +586,17 @@ class DiscreteDistribution:
         return DiscreteDistribution(xk, pk, name=s)
     
     def pmf(self, xi):
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Probability mass function at xi of the given distribution.
 
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        xi : numpy array or integer
+            Quantiles.
+            
+        Returns
+        -------
+        numpy array of float
+            Probability mass function evaluated at xi.
         """                
         #myxk = np.arange(self.xmin-1, self.xmax+2)
         #mypk = np.hstack((0, self.pk, 0))
@@ -538,17 +614,18 @@ class DiscreteDistribution:
         return mypk
     
     def plotCDF(self,  addZero=True, **kwargs):
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Plots the cumulative distribution function of this distrribution.
 
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        addZero : bool (default True)
+            If true the zero point will be explicitly plotted, otherwise not.
+        **kwargs: 
+            Arbitrary keyword arguments are passed to `Matplotlib.pyplot.step`.
+            
+        Returns
+        -------
+        None
         """                
         if addZero and self.xk[0]>=0:
             x = np.insert(self.xk,0,0)
@@ -562,128 +639,111 @@ class DiscreteDistribution:
         plt.step(x, Y, '.-', where='post', **kwargs)
         
     def plotPMF(self,  **kwargs):
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+        r"""Plots the probability mass function of this distrribution.
 
         Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
+        ----------        
+        **kwargs: 
+            Arbitrary keyword arguments are passed to `Matplotlib.pyplot.plot`.
+            
+        Returns
+        -------
+        None
         """                
         plt.plot(self.xk, self.pk, '.-', **kwargs)        
         
-    def conditionalRV(self, condition):
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
+    def conditionalRV(self, condition, name=None, normalized=True):
+        r"""Returns the normalized or unnormalized conditional random variable.
 
         Parameters
         ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
+        condition : function
+            Applies the function `condition` to match the corresponding values of the distribution.        
+        name : string, optional (default '{self.name}')
             Name of the distribution for string representation.
-
-        """                
-        return self
+        normalized : bool (default True)
+            If true returns a normalized distribution. If false returns the original probabilities for the 
+            range where the condition is true. 
+            
+        Returns
+        -------
+        DiscreteDistribution
+            Returns the conditional distribution for which the condition (applied to `xk`) is true. 
+            The resulting distribution is normalized if the paraemter `normalized` is true.
+            
+            
+        Raises
+        ------
+        ValueError
+            If the condition is not fulfilled for any value `xk`
+            
+        """     
+        s = f'{self.name}|condition' if name is None else name     
+        which = condition(self.xk)
+        
+        Apk = self.pk[which] 
+        Axk = self.xk[which] 
+        if normalized:            
+            if Apk.sum()==0:
+                raise ValueError('conditionalRV: condition is not possible!')
+            return DiscreteDistribution(Axk, Apk/Apk.sum(), name=s)   
+        else:
+            return DiscreteDistribution(Axk, Apk, name=s)   
         
     
     # A+B
-    def __add__(self, other): 
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+    def __add__(self, other):                
         return DiscreteDistribution.conv(self,other,name=f'{self.name}+{other.name}')
     
     # A-C
-    def __sub__(self, other): 
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+    def __sub__(self, other):                 
         return DiscreteDistribution.convNeg(self,other,name=f'{self.name}-{other.name}')
     
+    # A-C
+    def __mul__(A, B):                 
+        if isinstance(A,DiscreteDistribution):
+            return DiscreteDistribution(A.xk*B,A.pk,name=f'{B}*{A.name}')
+        elif isinstance(B,DiscreteDistribution):
+            return DiscreteDistribution(B.xk*A,B.pk,name=f'{A}*{B.name}')
+            
     # A<B: based on means
-    def __lt__(self, other):        
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+    def __lt__(self, other):                        
         return self.mean() < other.mean()
     
-    def __le__(self, other):        
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+    # A<=B: based on means
+    def __le__(self, other):                        
         return self.mean() <= other.mean()
     
-    def __eq__(self, other):        
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
-        if len(self.xk) != len(other.xk): return False
-        return np.all(self.xk==other.xk) and np.all(self.pk==other.pk)
+    # A>B: based on means
+    def __gt__(self, other):                        
+        return self.mean() > other.mean()
     
-    def __repr__(self):
-        r"""Discrete distribution is initialized with value range `xk`and probabilities `pk`.
-
-        Parameters
-        ----------
-        xk : numpy array
-            Values of the distribution.
-        pk : numpy array
-            Probabilities corresponding to the values: \( P(X=xk)=pk \).
-        name : string, optional (default 'discrete distr.')
-            Name of the distribution for string representation.
-
-        """                
+    # A>=B: based on means
+    def __ge__(self, other):                        
+        return self.mean() >= other.mean()
+    
+    # A==B: based on means and threshold comparisonEQ_eps
+    def __eq__(self, other):                        
+        #if len(self.xk) != len(other.xk): return False
+        #return np.all(self.xk==other.xk) and np.all(self.pk==other.pk)
+        return abs(self.mean()-other.mean())<=comparisonEQ_eps
+    
+    # A!=B: based on means and threshold comparisonEQ_eps
+    def __ne__(self, other):                        
+        return abs(self.mean()-other.mean())>comparisonEQ_eps
+    
+    def __getExtendedRangeDist(self, xmin, xmax):
+        end = np.zeros(xmax-self.xmax) if self.xmax < xmax else []
+        start = np.zeros(self.xmin-xmin) if self.xmin > xmin else []    
+        return np.concatenate((start, self.pk, end))
+        
+        
+    # A|condition
+    def __or__(self, other):
+        if callable(other):  # A|condition
+            return self.conditionalRV(other)
+    
+    def __repr__(self):                
         return self.__str__()
 
     def __str__(self):
@@ -691,331 +751,456 @@ class DiscreteDistribution:
             return f'{self.name}: xk={np.array2string(self.xk,separator=",")}, pk={np.array2string(self.pk,precision=3, separator=",")}'
         else:
             return f'{self.name}: xk={self.xmin},...,{self.xmax}, pk={self.pk[0]:g},...,{self.pk[-1]:g}'
-    
+
+
+
+#%%    
 def pi_op(A, m=0, name=None):    
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
-    Parameters
+    r"""Returns the pi-operator applied to A.
+    
+    See also
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
-
-    Returns
-    -------
-    bool
-        True if successful, False otherwise.
+    `DiscreteDistribution.pi_op`
     """ 
-    return DiscreteDistribution.pi_op(A,m,name)
+    return A.pi_op(m, name)
 
 def pi0(A, name=None):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
-    Parameters
+    r"""Returns the pi0-operator applied to A.
+    
+    See also
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
-
-    Returns
-    -------
-    bool
-        True if successful, False otherwise.
+    `DiscreteDistribution.pi0`
     """ 
-    return DiscreteDistribution.pi0(A, name=name)    
+    return A.pi0(name=name)    
 
-def conv(A,B,name='A+B'):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
-    Parameters
+def conv(A,B,name=None):
+    r"""Returns the sum of the random variables A+B using convolution operator.
+    
+    See also
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
-
-    Returns
-    -------
-    bool
-        True if successful, False otherwise.
-    """    
-    pk = np.convolve(A.pk, B.pk)
-    xk = np.arange(A.xmin+B.xmin, A.xmax+B.xmax+1)
-    return (xk, pk)
+    `DiscreteDistribution.conv`
+    """        
+    return A.conv(B, name=name)
 
 
 def plotCDF(A, addZero=True, **kwargs):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
-    Parameters
+    r"""Plots the CDF of the distribution `A`. 
+    
+    See also
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
-
-    Returns
-    -------
-    bool
-        True if successful, False otherwise.
-    """     
+    `DiscreteDistribution.plotCDF`
+    """      
     A.plotCDF(addZero, **kwargs)
     
+def plotPMF(A, addZero=True, **kwargs):
+    r"""Plots the PMF of the distribution `A`. 
+    
+    See also
+    ----------
+    `DiscreteDistribution.plotPMF`
+    """      
+    A.plotPMF(addZero, **kwargs)    
+    
 
-def gg1_waitingTime(W0, C, epsMean=1e-4, epsProb=1e-16):
-    r"""Example function with types documented in the docstring.
+def lindley_equation(W0, C, epsProb=1e-16):
+    r"""Implements the Lindley equation.
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+    Solves the discrete-time Lindley equation which is used for the analysis of the waiting time
+    in a GI/GI/1 system. 
+    
+    $$
+    w(k)  =   \pi_0 \Big(w(k) * c(k)\Big) 
+    $$
+    
+    The solution is derived by iteration for a given starting distribution `W0` until the difference \(W_{n+1}-W_{n} \) between
+    subsequent distributions is below the treshold `discreteTimeAnalysis.comparisonEQ_eps`.
+    
+    $$ 
+    W_{n+1} = \max(0, W_n+B-A) \\
+    w_{n+1} (k)  =  \pi_0  (w_n(k) * c_n(k)) 
+    $$
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    W0 : DiscreteDistribution
+        The initial system distribution.
+    C : DiscreteDistribution
+        The characteristic function of the system.
+    eps : float (default 1e-16)
+        Threshold which leading or trailing probabilities are to be removed. See `DiscreteDistribution.trimPMF`.  
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
-    """     
-    diff = 1
+    DiscreteDistribution
+        Steady-state distribution of the stationary discrete-time Lindley equation.
+    """         
     Wn = W0
+    Wn1 = DiscreteDistribution([-1], [1])
     i = 0
-    while diff>epsMean:
+    
+    while Wn1 != Wn:
         Wn1 = pi0(Wn+C)
-        diff = np.abs(Wn.mean()-Wn1.mean())
+        
         Wn = Wn1
         Wn.name = None
-        Wn.trimEps(eps=epsProb)
+        Wn.trimPMF(eps=epsProb)
         i += 1
     return Wn, i
-        
-    
-def kingman(rho, cA, cB, EB):
-    r"""Example function with types documented in the docstring.
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+
+def GIGI1_waitingTime(A, B, W0=DiscreteDistribution([0],[1]), epsProb=1e-16):  
+    r"""Returns the stationary waiting time distribution of the GI/GI/1 queue.
+
+    The stationary waiting time distribution of the GI/GI/1 queue is derived by solving
+    the Lindley equation, see `discreteTimeAnalysis.lindley_equation`.
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    W0 : DiscreteDistribution, optional (default DET(0))
+        The initial waiting time distribution. The default value is an empty system, i.e. no waiting time 
+        `W0 = DET(0)`.
+    A : DiscreteDistribution
+        Interarrival time.
+    B : DiscreteDistribution
+        Service time.
+    eps : float (default 1e-16)
+        Threshold which leading or trailing probabilities are to be removed. See `DiscreteDistribution.trimPMF`.  
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    DiscreteDistribution
+        Steady-state waiting time distribution of the GI/GI/1 queue.
+        
+    Raises
+    -------
+    ValueError
+        If the system utilization EB/EA>1.
+        
+    See also
+    --------
+    `discreteTimeAnalysis.lindley_equation`
+    """ 
+    if B.mean()/A.mean() >= 1:
+        raise ValueError(f'GIGI1_waitingTime: System utilization is rho={B.mean()/A.mean():.2f}>1')     
+    return lindley_equation(W0, B-A, epsProb)
+    
+def kingman(EA, cA, EB, cB):
+    r"""Returns the Kingman approximation for the mean waiting time of a GI/GI/1 queue.
+
+    Parameters
+    ----------
+    EA : float
+        Mean interarrival time.
+    cA : float
+        Coefficient of variation of the interarrival time.
+    EB : float
+        Mean service time.
+    cB : float
+        Coefficient of variation of the service time.
+
+    Returns
+    -------
+    float
+        Kingman approximation of the mean waiting time.
+        
+    Raises
+    -------
+    ValueError
+        If the system utilization EB/EA>1.
     """     
+    rho = EB/EA
+    raise ValueError(f'Kingman: System utilization is rho={rho:.2f}>1')
     return rho/(1-rho)*EB*(cA**2+cB**2)/2
 
 #%% Bernoulli distribution
+def BER(p, name=None):
+    r"""Returns a Bernoulli distribution.
+    
+    With the success probability p, the Bernoulli experiment is sucessful.
+    \(P(X=1)=p\) and \(P(X=0)=1-p\).
 
+    Parameters
+    ----------
+    p : float
+        Sucess probability.
+    name : string, optional (default 'BER(p)')
+        Name of the distribution for string representation.
+
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a Bernoulli distribution with success probability p.
+        
+    Raises
+    -------
+    ValueError
+        If the success probability is not in the range 0<p<1. 
+    """         
+    if p>1 or p<0:
+        raise ValueError(f'BER: success probability {p:.2f} out of range')
+    s = f'BER({p:.2f})' if name is None else name
+    return DiscreteDistribution([0,1],[1-p,p], name=s)
+
+from scipy.stats import binom
 # Binomial distribution
+def BINOM(N, p, name=None):
+    r"""Returns a Binomial distribution.
+    
+    The binomial distribution counts the number of successes, if 
+    a Bernoulli experiment is repeated N-times with success probability p.
+    
+    Parameters
+    ----------
+    N : integer
+        Number of Bernoulli experiments.
+    p : float
+        Sucess probability.
+    name : string, optional (default 'BINOM(N,p)')
+        Name of the distribution for string representation.
 
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a Binomial distribution with parameters N and p.
+        
+    Raises
+    -------
+    ValueError
+        If the success probability is not in the range 0<p<1. 
+    """         
+    if p>1 or p<0:
+        raise ValueError(f'BINOM: success probability {p:.2f} out of range')
+    s = f'BINOM({N}, {p:.2f})' if name is None else name
+    xk = np.arange(N+1)
+    return DiscreteDistribution(xk, binom.pmf(xk, N, p), name=s)
+
+from scipy.stats import poisson
 # poisson distribution
+def POIS(y, eps=1e-8, name=None):
+    r"""Returns a Poisson distribution with mean y.
+    
+    The Poisson distribution is a discrete distribution and has a single parameter 
+    reflecting the mean of the random variable. Since the DiscreteDistribution needs to 
+    have a finite range, the distribution is truncated at the right side if the probabilities
+    are less than `eps`.
+    
+    Parameters
+    ----------
+    y : float
+        Mean of the Poisson distribution.
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default 'POIS(y)')
+        Name of the distribution for string representation.
 
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a Poisson distribution with parameter y.
+        
+    Raises
+    -------
+    ValueError
+        If the mean value is negative.
+    """   
+    if y<0:
+        raise ValueError(f'POIS: mean value {y:.2f} out of range')
+    
+    s = f'POIS({y:.2f})' if name is None else name
+    
+    rv = poisson(y)
+    cut = int(rv.isf(eps))
+    #print(f'cut at {cut}')
+    x = np.arange(cut)
+    pk = rv.pmf(x)
+    return DiscreteDistribution(x, pk/pk.sum(), name=s)
 
 #%% NEGBIN files
 from scipy.stats import nbinom, geom
 
 def getNegBinPars(mu,cx):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+    r"""Returns the two parameters of a negative binomial distribution for given mean and coefficient of variation.
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    mu : float
+        Mean value.
+    cx : float
+        Coefficient of variation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    a,b : float, float
+        Parameters of the negative binomial distribution.
+        
+    Raises
+    -------
+    ValueError
+        If the parameter range is violated: mu*cx**2>1
     """     
+    if mu*cx**2<=1:
+        raise ValueError(f'getNegBinPars: parameter range is not possible, mu*cx**2={mu*cx**2:2.f}<=1 ')    
     z = cx**2*mu-1    
     return mu/z, 1- z/(cx**2*mu)
 
 
-def NEGBIN(EX,cx, eps=1e-8):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+def NEGBIN(EX,cx, eps=1e-8, name=None):
+    r"""Returns a negative binomial distribution for given mean and coefficient of variation.
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    mu : float
+        Mean value.
+    cx : float
+        Coefficient of variation.
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default 'NEGBIN(EX,cx)')
+        Name of the distribution for string representation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    DiscreteDistribution
+        Returns a negative binomial distribution with mean EX and coefficient of variation cx.
+        
+    Raises
+    -------
+    ValueError
+        If the parameter range is violated: mu*cx**2>1
     """     
     r,p = getNegBinPars(EX,cx)
+    
+    s = f'NEGBIN({EX:.2f},{cx:.2f})' if name is None else name
+    
     rv = nbinom(r,p)
     cut = int(rv.isf(eps))
     #print(f'cut at {cut}')
     x = np.arange(cut)
     pk = rv.pmf(x)
-    return DiscreteDistribution(x, pk/pk.sum())
+    return DiscreteDistribution(x, pk/pk.sum(), name=s)
 
 def DET(EX, name=None):
-    r"""Example function with types documented in the docstring.
+    r"""Returns a deterministic distribution.
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+    With probability 1, the distribution takes the value EX.
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    EX : integer
+        Mean value.    
+    name : string, optional (default 'DET(EX)')
+        Name of the distribution for string representation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    DiscreteDistribution
+        Returns a deterministic distribution with parameter EX.        
     """     
     return DiscreteDistribution([EX], [1.0], name=name)
     
 def DU(a=1, b=10, name=None):    
-    r"""Example function with types documented in the docstring.
+    r"""Returns a discrete uniform distribution in the range [a,b].
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
+    With the same probability, any value a <= k <=b is taken. 
 
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    a : integer
+        Lower value range.    
+    b : integer
+        Upper value range.    
+    name : string, optional (default 'DU(a,b)')
+        Name of the distribution for string representation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
-    """     
+    DiscreteDistribution
+        Returns a discrete uniform distribution in the interval [a;b].        
+    """    
+    s = f'DET({a},{b})' if name is None else name
+    
     xk = np.arange(a,b+1)
     n = b-a+1
     pk = 1.0/n
-    return DiscreteDistribution(xk, np.array([pk]*n), name=name)    
+    return DiscreteDistribution(xk, np.array([pk]*n), name=s)    
 
 def GEOM(EX, m=0, eps=1e-8, name=None):
-    r"""Example function with types documented in the docstring.
+    r"""Returns a shifted geometric distribution with mean EX.
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
+    A shifted geometric distribution is returned which has the mean value `EX`. 
+    The distribution is thereby shifted by `m`. Thus, \(P(X=k=0\) for any \(k<m\).
+    
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    EX : float
+        Mean value of the shifted geometric distribution.
+    m : integer (default 0)
+        Distribution is shifted by m.    
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default 'GEOM_m(p)')
+        Name of the distribution for string representation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
-    """     
+    DiscreteDistribution
+        Returns a shifted geometric distribution with mean EX.        
+    """        
     p = 1.0/(EX+1-m)    
     rv = geom(p, loc=m-1)
     cut = int(rv.isf(eps))    
     x = np.arange(cut)
     pk = rv.pmf(x)
-    return DiscreteDistribution(x, pk/pk.sum(), name=name)
-
-#%% substitute distribution
-def substiteDistribution(EX, cX, name=None):
-    r"""Example function with types documented in the docstring.
-
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
-    Parameters
-    ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
-
-    Returns
-    -------
-    bool
-        True if successful, False otherwise.
-    """     
-    if cX==0:
-        return DET([EX], [1.0], name=name)
-    elif cX==1:
-        return GEOM(EX, name=name)
     
+    s = f'GEOM_{m}({p:.2f})' if name is None else name   
+    return DiscreteDistribution(x, pk/pk.sum(), name=s)
+
 #%% mixture distribution
-def MIX(A,  w, name=None):
-    r"""Example function with types documented in the docstring.
+def MIX(A, w=None, name=None):
+    r"""Returns the mixture distribution with weights w.
 
-    `PEP 484`_ type annotations are supported. If attribute, parameter, and
-    return types are annotated according to `PEP 484`_, they do not need to be
-    included in the docstring:
-
+    Consider a set of independent random variables [A_1,..,A_k].
+    A random variable $A$ is now constructed in such a way that with the probability p_i the random variable A_i is selected. 
+    
     Parameters
     ----------
-    param1 : int
-        The first parameter.
-    param2 : str, optional (default '5')
-        The second parameter.
+    A : list of DiscreteDistributions
+        List of distributions. 
+    w : list of weights, optional (default w=[1/k, ..., 1/k])
+        A distribution is considered with the probabilities given in the list of weights.
+    name : string, optional (default 'MIX')
+        Name of the distribution for string representation.
 
     Returns
     -------
-    bool
-        True if successful, False otherwise.
+    DiscreteDistribution
+        Returns a shifted geometric distribution with mean EX.        
+        
+    Example
+    -------
+    >>> A = DET(4)
+    >>> B = DU(1,10)
+    >>> C = MIX( (A,B) )
+    >>> D = A+B
+
+    >>> plt.figure(1, clear=True)
+    >>> A.plotCDF(label='A')
+    >>> B.plotCDF(label='B')
+    >>> C.plotCDF(label='MIX')
+    >>> D.plotCDF(label='A+B')
+    >>> plt.legend()
     """     
     xkMin = min(list(map(lambda Ai: Ai.xk[0], A)))
     xkMax = max(list(map(lambda Ai: Ai.xk[-1], A)))
+    
+    if w is None:
+        n = len(A)
+        w = [1.0/n]*n
     
     xk = np.arange( xkMin, xkMax+1)
     pk = np.zeros(len(xk))
     for (Ai, wi) in zip(A,w):
         iA = np.searchsorted(xk, Ai.xk, side='left')
         pk[iA] += Ai.pk*wi
-    return DiscreteDistribution(xk, pk, name=name)
-
+    s = 'MIX' if name is None else name   
+    return DiscreteDistribution(xk, pk, name=s)
