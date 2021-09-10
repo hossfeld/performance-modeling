@@ -40,7 +40,7 @@ Würzburg University Press. <br>
 In the example, we consider the sum of two random variables, which requires the convolution of the corresponding probability mass functions.
 The r.v. A follows a discrete uniform distribution in the range [0;10], while the r.v. B follows a negative binomial distribution,
 which is defined through the mean and the coefficient of variation.</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
+<pre><code class="python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
 &gt;&gt;&gt; A = dt.DU(a=0, b=10) % A ~ DU(0,10)
 &gt;&gt;&gt; EX, cX = 2.0, 1.5   % mean EX and coefficient of variation cX
 &gt;&gt;&gt; B = dt.NEGBIN(EX, cX) % negative binomial distribution
@@ -457,7 +457,7 @@ class DiscreteDistribution:
         s = f&#39;pi0({self.name})&#39; if name is None else name
         return self.pi_op(m=0, name=s)
     
-    def _trim(self, m):
+    def _trim(self, m, normalize=True):
         r&#34;&#34;&#34;Truncates the distribution from left and right side. 
         
         The operation uses the minimum and maximum of the values m and truncates the distribution to 
@@ -467,6 +467,8 @@ class DiscreteDistribution:
         ----------
         m : numpy array of boolean values
             The first and the last True value in the array are used to truncate the distribution.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -483,23 +485,31 @@ class DiscreteDistribution:
         
         self.xmin = self.xk[0]
         self.xmax = self.xk[-1]
+        
+        if normalize:
+            self.pk /= self.pk.sum()
         return
     
-    def trim(self):
+    def trim(self, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities. 
         
         The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
         any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+        
+        Parameters
+        ----------        
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
 
         Returns
         -------
         None
         &#34;&#34;&#34;                
         m = self.pk!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return 
     
-    def trimPMF(self, eps=1e-8):
+    def trimPMF(self, eps=1e-8, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities below a certain threshold. 
         
         The trimPMF-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
@@ -510,6 +520,8 @@ class DiscreteDistribution:
         ----------
         eps : float
             Threshold which leading or trailing probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -517,10 +529,10 @@ class DiscreteDistribution:
 
         &#34;&#34;&#34;                
         m = self.pk&gt;eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return
     
-    def trimCDF(self, eps=1e-8):
+    def trimCDF(self, eps=1e-8, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing cumulative probabilities below a certain threshold. 
         
         The trimCDF-operation changes the value range `xk` and the corresponding probabilities `pk` 
@@ -531,13 +543,15 @@ class DiscreteDistribution:
         ----------
         eps : float
             Threshold which leading or trailing cumulative probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
         None        
         &#34;&#34;&#34;                
         m = self.pk.cumsum()&gt;eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return    
     
     
@@ -687,6 +701,35 @@ class DiscreteDistribution:
         
         if len(i)&gt;0:            
             mypk[i] = self.pk[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
+        return mypk
+    
+    def cdf(self, xi):
+        r&#34;&#34;&#34;Cumulative distribution function at xi of the given distribution.
+
+        Parameters
+        ----------
+        xi : numpy array or integer
+            Quantiles.
+            
+        Returns
+        -------
+        numpy array of float
+            Cumulative distribution function evaluated at xi.
+        &#34;&#34;&#34;                
+        #myxk = np.arange(self.xmin-1, self.xmax+2)
+        #mypk = np.hstack((0, self.pk, 0))
+        PK = self.pk.cumsum()
+        if type(xi) is not np.ndarray:
+            if type(xi) is list:
+                xi = np.array(xi)
+            else:
+                xi = np.array([xi])
+        
+        i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
+        mypk = np.zeros(len(xi))
+        
+        if len(i)&gt;0:            
+            mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
         return mypk
     
     def plotCDF(self,  addZero=True, **kwargs):
@@ -1231,6 +1274,7 @@ def GEOM(EX, m=0, eps=1e-8, name=None):
     s = f&#39;GEOM_{m}({p:.2f})&#39; if name is None else name   
     return DiscreteDistribution(x, pk/pk.sum(), name=s)
 
+
 #%% mixture distribution
 def MIX(A, w=None, name=None):
     r&#34;&#34;&#34;Returns the mixture distribution with weights w.
@@ -1662,12 +1706,12 @@ A random variable $A$ is now constructed in such a way that with the probability
 <dd>Returns a shifted geometric distribution with mean EX.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DET(4)
+<pre><code class="python-repl">&gt;&gt;&gt; A = DET(4)
 &gt;&gt;&gt; B = DU(1,10)
 &gt;&gt;&gt; C = MIX( (A,B) )
 &gt;&gt;&gt; D = A+B
 </code></pre>
-<pre><code class="language-python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
+<pre><code class="python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
 &gt;&gt;&gt; A.plotCDF(label='A')
 &gt;&gt;&gt; B.plotCDF(label='B')
 &gt;&gt;&gt; C.plotCDF(label='MIX')
@@ -2524,7 +2568,7 @@ distribution which is used when printing an instance of the class, see e.g.
         s = f&#39;pi0({self.name})&#39; if name is None else name
         return self.pi_op(m=0, name=s)
     
-    def _trim(self, m):
+    def _trim(self, m, normalize=True):
         r&#34;&#34;&#34;Truncates the distribution from left and right side. 
         
         The operation uses the minimum and maximum of the values m and truncates the distribution to 
@@ -2534,6 +2578,8 @@ distribution which is used when printing an instance of the class, see e.g.
         ----------
         m : numpy array of boolean values
             The first and the last True value in the array are used to truncate the distribution.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -2550,23 +2596,31 @@ distribution which is used when printing an instance of the class, see e.g.
         
         self.xmin = self.xk[0]
         self.xmax = self.xk[-1]
+        
+        if normalize:
+            self.pk /= self.pk.sum()
         return
     
-    def trim(self):
+    def trim(self, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities. 
         
         The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
         any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+        
+        Parameters
+        ----------        
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
 
         Returns
         -------
         None
         &#34;&#34;&#34;                
         m = self.pk!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return 
     
-    def trimPMF(self, eps=1e-8):
+    def trimPMF(self, eps=1e-8, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities below a certain threshold. 
         
         The trimPMF-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
@@ -2577,6 +2631,8 @@ distribution which is used when printing an instance of the class, see e.g.
         ----------
         eps : float
             Threshold which leading or trailing probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -2584,10 +2640,10 @@ distribution which is used when printing an instance of the class, see e.g.
 
         &#34;&#34;&#34;                
         m = self.pk&gt;eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return
     
-    def trimCDF(self, eps=1e-8):
+    def trimCDF(self, eps=1e-8, normalize=True):
         r&#34;&#34;&#34;Remove trailing and leading diminishing cumulative probabilities below a certain threshold. 
         
         The trimCDF-operation changes the value range `xk` and the corresponding probabilities `pk` 
@@ -2598,13 +2654,15 @@ distribution which is used when printing an instance of the class, see e.g.
         ----------
         eps : float
             Threshold which leading or trailing cumulative probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
         None        
         &#34;&#34;&#34;                
         m = self.pk.cumsum()&gt;eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return    
     
     
@@ -2756,6 +2814,35 @@ distribution which is used when printing an instance of the class, see e.g.
             mypk[i] = self.pk[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
         return mypk
     
+    def cdf(self, xi):
+        r&#34;&#34;&#34;Cumulative distribution function at xi of the given distribution.
+
+        Parameters
+        ----------
+        xi : numpy array or integer
+            Quantiles.
+            
+        Returns
+        -------
+        numpy array of float
+            Cumulative distribution function evaluated at xi.
+        &#34;&#34;&#34;                
+        #myxk = np.arange(self.xmin-1, self.xmax+2)
+        #mypk = np.hstack((0, self.pk, 0))
+        PK = self.pk.cumsum()
+        if type(xi) is not np.ndarray:
+            if type(xi) is list:
+                xi = np.array(xi)
+            else:
+                xi = np.array([xi])
+        
+        i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
+        mypk = np.zeros(len(xi))
+        
+        if len(i)&gt;0:            
+            mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
+        return mypk
+    
     def plotCDF(self,  addZero=True, **kwargs):
         r&#34;&#34;&#34;Plots the cumulative distribution function of this distrribution.
 
@@ -2897,6 +2984,55 @@ distribution which is used when printing an instance of the class, see e.g.
 </details>
 <h3>Methods</h3>
 <dl>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.cdf"><code class="name flex">
+<span>def <span class="ident">cdf</span></span>(<span>self, xi)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Cumulative distribution function at xi of the given distribution.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>xi</code></strong> :&ensp;<code>numpy array</code> or <code>integer</code></dt>
+<dd>Quantiles.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>numpy array</code> of <code>float</code></dt>
+<dd>Cumulative distribution function evaluated at xi.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cdf(self, xi):
+    r&#34;&#34;&#34;Cumulative distribution function at xi of the given distribution.
+
+    Parameters
+    ----------
+    xi : numpy array or integer
+        Quantiles.
+        
+    Returns
+    -------
+    numpy array of float
+        Cumulative distribution function evaluated at xi.
+    &#34;&#34;&#34;                
+    #myxk = np.arange(self.xmin-1, self.xmax+2)
+    #mypk = np.hstack((0, self.pk, 0))
+    PK = self.pk.cumsum()
+    if type(xi) is not np.ndarray:
+        if type(xi) is list:
+            xi = np.array(xi)
+        else:
+            xi = np.array([xi])
+    
+    i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
+    mypk = np.zeros(len(xi))
+    
+    if len(i)&gt;0:            
+        mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
+    return mypk</code></pre>
+</details>
+</dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.checkDistribution"><code class="name flex">
 <span>def <span class="ident">checkDistribution</span></span>(<span>self)</span>
 </code></dt>
@@ -3012,7 +3148,7 @@ The operator <code>+</code> is overloaded for that class, such that <code>A+B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.conv(A) # returns A+A
 &gt;&gt;&gt; DiscreteDistribution.conv(A,A) # returns A+A
 &gt;&gt;&gt; A+A # returns A+A
@@ -3074,7 +3210,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.convNeg(A) # returns A-A
 &gt;&gt;&gt; DiscreteDistribution.convNeg(A,A) # returns A-A
 &gt;&gt;&gt; A-A # returns A-A
@@ -3156,7 +3292,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 </p>
 <p>This method prints basic characteristics of the distribution.</p>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A.describe()
+<pre><code class="python-repl">&gt;&gt;&gt; A.describe()
     interarrival_time: EX=5.5000, cX=0.5222, mode=1
 </code></pre></div>
 <details class="source">
@@ -3813,12 +3949,15 @@ truncated range are returned.</dd>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.trim"><code class="name flex">
-<span>def <span class="ident">trim</span></span>(<span>self)</span>
+<span>def <span class="ident">trim</span></span>(<span>self, normalize=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove trailing and leading diminishing probabilities. </p>
 <p>The trim-operation changes the value range <code>xk</code> and the corresponding probabilities <code>pk</code> by removing
 any leading and any trailing diminishing probabilities. This distribution object is therefore changed.</p>
+<h2 id="parameters">Parameters</h2>
+<p>normalize : bool
+If True, the distribution is renormalized. If False, the distribution is truncated.</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>None</code></dt>
@@ -3828,23 +3967,28 @@ any leading and any trailing diminishing probabilities. This distribution object
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def trim(self):
+<pre><code class="python">def trim(self, normalize=True):
     r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities. 
     
     The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
     any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+    
+    Parameters
+    ----------        
+    normalize : bool
+        If True, the distribution is renormalized. If False, the distribution is truncated.
 
     Returns
     -------
     None
     &#34;&#34;&#34;                
     m = self.pk!=0        
-    self._trim(m)
+    self._trim(m, normalize)
     return </code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.trimCDF"><code class="name flex">
-<span>def <span class="ident">trimCDF</span></span>(<span>self, eps=1e-08)</span>
+<span>def <span class="ident">trimCDF</span></span>(<span>self, eps=1e-08, normalize=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove trailing and leading diminishing cumulative probabilities below a certain threshold. </p>
@@ -3855,6 +3999,8 @@ This distribution object is therefore changed.</p>
 <dl>
 <dt><strong><code>eps</code></strong> :&ensp;<code>float</code></dt>
 <dd>Threshold which leading or trailing cumulative probabilities are to be removed.</dd>
+<dt><strong><code>normalize</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, the distribution is renormalized. If False, the distribution is truncated.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -3865,7 +4011,7 @@ This distribution object is therefore changed.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def trimCDF(self, eps=1e-8):
+<pre><code class="python">def trimCDF(self, eps=1e-8, normalize=True):
     r&#34;&#34;&#34;Remove trailing and leading diminishing cumulative probabilities below a certain threshold. 
     
     The trimCDF-operation changes the value range `xk` and the corresponding probabilities `pk` 
@@ -3876,18 +4022,20 @@ This distribution object is therefore changed.</p>
     ----------
     eps : float
         Threshold which leading or trailing cumulative probabilities are to be removed.
+    normalize : bool
+        If True, the distribution is renormalized. If False, the distribution is truncated.
         
     Returns
     -------
     None        
     &#34;&#34;&#34;                
     m = self.pk.cumsum()&gt;eps #!=0        
-    self._trim(m)
+    self._trim(m, normalize)
     return    </code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.trimPMF"><code class="name flex">
-<span>def <span class="ident">trimPMF</span></span>(<span>self, eps=1e-08)</span>
+<span>def <span class="ident">trimPMF</span></span>(<span>self, eps=1e-08, normalize=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove trailing and leading diminishing probabilities below a certain threshold. </p>
@@ -3898,6 +4046,8 @@ This distribution object is therefore changed.</p>
 <dl>
 <dt><strong><code>eps</code></strong> :&ensp;<code>float</code></dt>
 <dd>Threshold which leading or trailing probabilities are to be removed.</dd>
+<dt><strong><code>normalize</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, the distribution is renormalized. If False, the distribution is truncated.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
@@ -3908,7 +4058,7 @@ This distribution object is therefore changed.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def trimPMF(self, eps=1e-8):
+<pre><code class="python">def trimPMF(self, eps=1e-8, normalize=True):
     r&#34;&#34;&#34;Remove trailing and leading diminishing probabilities below a certain threshold. 
     
     The trimPMF-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
@@ -3919,6 +4069,8 @@ This distribution object is therefore changed.</p>
     ----------
     eps : float
         Threshold which leading or trailing probabilities are to be removed.
+    normalize : bool
+        If True, the distribution is renormalized. If False, the distribution is truncated.
         
     Returns
     -------
@@ -3926,7 +4078,7 @@ This distribution object is therefore changed.</p>
 
     &#34;&#34;&#34;                
     m = self.pk&gt;eps #!=0        
-    self._trim(m)
+    self._trim(m, normalize)
     return</code></pre>
 </details>
 </dd>
@@ -4003,6 +4155,7 @@ This distribution object is therefore changed.</p>
 <li>
 <h4><code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></h4>
 <ul class="two-column">
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.cdf" href="#discreteTimeAnalysis.DiscreteDistribution.cdf">cdf</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.checkDistribution" href="#discreteTimeAnalysis.DiscreteDistribution.checkDistribution">checkDistribution</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.conditionalRV" href="#discreteTimeAnalysis.DiscreteDistribution.conditionalRV">conditionalRV</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.conv" href="#discreteTimeAnalysis.DiscreteDistribution.conv">conv</a></code></li>
