@@ -613,6 +613,35 @@ class DiscreteDistribution:
             mypk[i] = self.pk[np.searchsorted(self.xk, xi[i], side='left')]
         return mypk
     
+    def cdf(self, xi):
+        r"""Cumulative distribution function at xi of the given distribution.
+
+        Parameters
+        ----------
+        xi : numpy array or integer
+            Quantiles.
+            
+        Returns
+        -------
+        numpy array of float
+            Cumulative distribution function evaluated at xi.
+        """                
+        #myxk = np.arange(self.xmin-1, self.xmax+2)
+        #mypk = np.hstack((0, self.pk, 0))
+        PK = self.pk.cumsum()
+        if type(xi) is not np.ndarray:
+            if type(xi) is list:
+                xi = np.array(xi)
+            else:
+                xi = np.array([xi])
+        
+        i = np.where( (xi>=self.xmin) & (xi<=self.xmax) )[0]
+        mypk = np.zeros(len(xi))
+        
+        if len(i)>0:            
+            mypk[i] = PK[np.searchsorted(self.xk, xi[i], side='left')]
+        return mypk
+    
     def plotCDF(self,  addZero=True, **kwargs):
         r"""Plots the cumulative distribution function of this distrribution.
 
