@@ -381,7 +381,7 @@ class DiscreteDistribution:
         s = f'pi0({self.name})' if name is None else name
         return self.pi_op(m=0, name=s)
     
-    def _trim(self, m):
+    def _trim(self, m, normalize=True):
         r"""Truncates the distribution from left and right side. 
         
         The operation uses the minimum and maximum of the values m and truncates the distribution to 
@@ -391,6 +391,8 @@ class DiscreteDistribution:
         ----------
         m : numpy array of boolean values
             The first and the last True value in the array are used to truncate the distribution.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -407,23 +409,31 @@ class DiscreteDistribution:
         
         self.xmin = self.xk[0]
         self.xmax = self.xk[-1]
+        
+        if normalize:
+            self.pk /= self.pk.sum()
         return
     
-    def trim(self):
+    def trim(self, normalize=True):
         r"""Remove trailing and leading diminishing probabilities. 
         
         The trim-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
         any leading and any trailing diminishing probabilities. This distribution object is therefore changed.
+        
+        Parameters
+        ----------        
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
 
         Returns
         -------
         None
         """                
         m = self.pk!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return 
     
-    def trimPMF(self, eps=1e-8):
+    def trimPMF(self, eps=1e-8, normalize=True):
         r"""Remove trailing and leading diminishing probabilities below a certain threshold. 
         
         The trimPMF-operation changes the value range `xk` and the corresponding probabilities `pk` by removing
@@ -434,6 +444,8 @@ class DiscreteDistribution:
         ----------
         eps : float
             Threshold which leading or trailing probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
@@ -441,10 +453,10 @@ class DiscreteDistribution:
 
         """                
         m = self.pk>eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return
     
-    def trimCDF(self, eps=1e-8):
+    def trimCDF(self, eps=1e-8, normalize=True):
         r"""Remove trailing and leading diminishing cumulative probabilities below a certain threshold. 
         
         The trimCDF-operation changes the value range `xk` and the corresponding probabilities `pk` 
@@ -455,13 +467,15 @@ class DiscreteDistribution:
         ----------
         eps : float
             Threshold which leading or trailing cumulative probabilities are to be removed.
+        normalize : bool
+            If True, the distribution is renormalized. If False, the distribution is truncated.
             
         Returns
         -------
         None        
         """                
         m = self.pk.cumsum()>eps #!=0        
-        self._trim(m)
+        self._trim(m, normalize)
         return    
     
     
@@ -1183,6 +1197,7 @@ def GEOM(EX, m=0, eps=1e-8, name=None):
     
     s = f'GEOM_{m}({p:.2f})' if name is None else name   
     return DiscreteDistribution(x, pk/pk.sum(), name=s)
+
 
 #%% mixture distribution
 def MIX(A, w=None, name=None):
