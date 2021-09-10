@@ -812,7 +812,13 @@ def max(A, m, name=None):
     r"""Returns the pi-operator applied to the distribution A.
     
     The pi-operator means the maximum of this random variable and the value m. 
-    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
+    The following two expressions are identical: `max` and `pi_op`.
+    
+    Example
+    -------    
+    >>> A = DU(0,4)
+    >>> B = max(A,3)
+    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     
     See also
     ----------
@@ -1173,7 +1179,7 @@ def DU(a=1, b=10, name=None):
     DiscreteDistribution
         Returns a discrete uniform distribution in the interval [a;b].        
     """    
-    s = f'DET({a},{b})' if name is None else name
+    s = f'DU({a},{b})' if name is None else name
     
     xk = np.arange(a,b+1)
     n = b-a+1

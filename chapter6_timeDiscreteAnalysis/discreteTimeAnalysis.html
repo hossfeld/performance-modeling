@@ -888,7 +888,13 @@ def max(A, m, name=None):
     r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
     
     The pi-operator means the maximum of this random variable and the value m. 
-    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
+    The following two expressions are identical: `max` and `pi_op`.
+    
+    Example
+    -------    
+    &gt;&gt;&gt; A = DU(0,4)
+    &gt;&gt;&gt; B = max(A,3)
+    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     
     See also
     ----------
@@ -1249,7 +1255,7 @@ def DU(a=1, b=10, name=None):
     DiscreteDistribution
         Returns a discrete uniform distribution in the interval [a;b].        
     &#34;&#34;&#34;    
-    s = f&#39;DET({a},{b})&#39; if name is None else name
+    s = f&#39;DU({a},{b})&#39; if name is None else name
     
     xk = np.arange(a,b+1)
     n = b-a+1
@@ -1558,7 +1564,7 @@ a Bernoulli experiment is repeated N-times with success probability p.</p>
     DiscreteDistribution
         Returns a discrete uniform distribution in the interval [a;b].        
     &#34;&#34;&#34;    
-    s = f&#39;DET({a},{b})&#39; if name is None else name
+    s = f&#39;DU({a},{b})&#39; if name is None else name
     
     xk = np.arange(a,b+1)
     n = b-a+1
@@ -2156,7 +2162,12 @@ w_{n+1} (k)
 <dd>
 <div class="desc"><p>Returns the pi-operator applied to the distribution A.</p>
 <p>The pi-operator means the maximum of this random variable and the value m.
-The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a>(A,0)</code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a>(A,m)</code>.</p>
+The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a></code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a></code>.</p>
+<h2 id="example">Example</h2>
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
+&gt;&gt;&gt; B = max(A,3)
+pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
+</code></pre>
 <h2 id="see-also">See Also</h2>
 <p><code><a title="discreteTimeAnalysis.DiscreteDistribution.pi_op" href="#discreteTimeAnalysis.DiscreteDistribution.pi_op">DiscreteDistribution.pi_op()</a></code></p></div>
 <details class="source">
@@ -2167,7 +2178,13 @@ The following two expressions are identical: <code><a title="discreteTimeAnalysi
     r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
     
     The pi-operator means the maximum of this random variable and the value m. 
-    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
+    The following two expressions are identical: `max` and `pi_op`.
+    
+    Example
+    -------    
+    &gt;&gt;&gt; A = DU(0,4)
+    &gt;&gt;&gt; B = max(A,3)
+    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     
     See also
     ----------
