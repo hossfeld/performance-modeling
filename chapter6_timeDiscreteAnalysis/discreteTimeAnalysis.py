@@ -345,8 +345,8 @@ class DiscreteDistribution:
             pk = np.zeros(len(xk))
             pk[0] = np.sum(self.pk[0:k+1])
             pk[1:] = self.pk[k+1:]
-            return DiscreteDistribution(xk,pk,name=s)        
-    
+            return DiscreteDistribution(xk,pk,name=s)
+            
     def pi0(self, name=None):
         r"""Applies the pi-operator (truncation of negative values, summing up probabilities ) and returns the resulting distribution.
         
@@ -800,6 +800,19 @@ class DiscreteDistribution:
 #%%    
 def pi_op(A, m=0, name=None):    
     r"""Returns the pi-operator applied to A.
+    
+    See also
+    ----------
+    `DiscreteDistribution.pi_op`
+    """ 
+    return A.pi_op(m, name)
+
+        
+def max(A, m, name=None):    
+    r"""Returns the pi-operator applied to the distribution A.
+    
+    The pi-operator means the maximum of this random variable and the value m. 
+    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
     
     See also
     ----------
