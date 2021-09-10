@@ -421,8 +421,8 @@ class DiscreteDistribution:
             pk = np.zeros(len(xk))
             pk[0] = np.sum(self.pk[0:k+1])
             pk[1:] = self.pk[k+1:]
-            return DiscreteDistribution(xk,pk,name=s)        
-    
+            return DiscreteDistribution(xk,pk,name=s)
+            
     def pi0(self, name=None):
         r&#34;&#34;&#34;Applies the pi-operator (truncation of negative values, summing up probabilities ) and returns the resulting distribution.
         
@@ -876,6 +876,19 @@ class DiscreteDistribution:
 #%%    
 def pi_op(A, m=0, name=None):    
     r&#34;&#34;&#34;Returns the pi-operator applied to A.
+    
+    See also
+    ----------
+    `DiscreteDistribution.pi_op`
+    &#34;&#34;&#34; 
+    return A.pi_op(m, name)
+
+        
+def max(A, m, name=None):    
+    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+    
+    The pi-operator means the maximum of this random variable and the value m. 
+    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
     
     See also
     ----------
@@ -2137,6 +2150,32 @@ w_{n+1} (k)
     return Wn, i</code></pre>
 </details>
 </dd>
+<dt id="discreteTimeAnalysis.max"><code class="name flex">
+<span>def <span class="ident">max</span></span>(<span>A, m, name=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the pi-operator applied to the distribution A.</p>
+<p>The pi-operator means the maximum of this random variable and the value m.
+The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a>(A,0)</code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a>(A,m)</code>.</p>
+<h2 id="see-also">See Also</h2>
+<p><code><a title="discreteTimeAnalysis.DiscreteDistribution.pi_op" href="#discreteTimeAnalysis.DiscreteDistribution.pi_op">DiscreteDistribution.pi_op()</a></code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def max(A, m, name=None):    
+    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+    
+    The pi-operator means the maximum of this random variable and the value m. 
+    The following two expressions are identical: `max(A,0)` and `pi_op(A,m)`.
+    
+    See also
+    ----------
+    `DiscreteDistribution.pi_op`
+    &#34;&#34;&#34; 
+    return A.pi_op(m, name)</code></pre>
+</details>
+</dd>
 <dt id="discreteTimeAnalysis.pi0"><code class="name flex">
 <span>def <span class="ident">pi0</span></span>(<span>A, name=None)</span>
 </code></dt>
@@ -2532,8 +2571,8 @@ distribution which is used when printing an instance of the class, see e.g.
             pk = np.zeros(len(xk))
             pk[0] = np.sum(self.pk[0:k+1])
             pk[1:] = self.pk[k+1:]
-            return DiscreteDistribution(xk,pk,name=s)        
-    
+            return DiscreteDistribution(xk,pk,name=s)
+            
     def pi0(self, name=None):
         r&#34;&#34;&#34;Applies the pi-operator (truncation of negative values, summing up probabilities ) and returns the resulting distribution.
         
@@ -3543,7 +3582,7 @@ x(k) & k > m \\
         pk = np.zeros(len(xk))
         pk[0] = np.sum(self.pk[0:k+1])
         pk[1:] = self.pk[k+1:]
-        return DiscreteDistribution(xk,pk,name=s)        </code></pre>
+        return DiscreteDistribution(xk,pk,name=s)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.plotCDF"><code class="name flex">
@@ -4144,6 +4183,7 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.getNegBinPars" href="#discreteTimeAnalysis.getNegBinPars">getNegBinPars</a></code></li>
 <li><code><a title="discreteTimeAnalysis.kingman" href="#discreteTimeAnalysis.kingman">kingman</a></code></li>
 <li><code><a title="discreteTimeAnalysis.lindley_equation" href="#discreteTimeAnalysis.lindley_equation">lindley_equation</a></code></li>
+<li><code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max</a></code></li>
 <li><code><a title="discreteTimeAnalysis.pi0" href="#discreteTimeAnalysis.pi0">pi0</a></code></li>
 <li><code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op</a></code></li>
 <li><code><a title="discreteTimeAnalysis.plotCDF" href="#discreteTimeAnalysis.plotCDF">plotCDF</a></code></li>
