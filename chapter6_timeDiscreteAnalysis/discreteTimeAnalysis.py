@@ -971,7 +971,8 @@ def kingman(EA, cA, EB, cB):
         If the system utilization EB/EA>1.
     """     
     rho = EB/EA
-    raise ValueError(f'Kingman: System utilization is rho={rho:.2f}>1')
+    if rho>1:
+        raise ValueError(f'Kingman: System utilization is rho={rho:.2f}>1')
     return rho/(1-rho)*EB*(cA**2+cB**2)/2
 
 #%% Bernoulli distribution
