@@ -40,7 +40,7 @@ Würzburg University Press. <br>
 In the example, we consider the sum of two random variables, which requires the convolution of the corresponding probability mass functions.
 The r.v. A follows a discrete uniform distribution in the range [0;10], while the r.v. B follows a negative binomial distribution,
 which is defined through the mean and the coefficient of variation.</p>
-<pre><code class="python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
+<pre><code class="language-python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
 &gt;&gt;&gt; A = dt.DU(a=0, b=10) % A ~ DU(0,10)
 &gt;&gt;&gt; EX, cX = 2.0, 1.5   % mean EX and coefficient of variation cX
 &gt;&gt;&gt; B = dt.NEGBIN(EX, cX) % negative binomial distribution
@@ -728,7 +728,7 @@ class DiscreteDistribution:
         
         i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
         mypk = np.zeros(len(xi))
-        
+        mypk[xi&gt;=self.xmax] = 1
         if len(i)&gt;0:            
             mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
         return mypk
@@ -912,7 +912,7 @@ def pi0(A, name=None):
 
 oldmax = max    
 def max(*args):    
-    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+    r&#34;&#34;&#34;Returns the maximum of the random variables. 
         
     The pi-operator means the maximum of the random variable and the value m. 
     The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
@@ -921,7 +921,28 @@ def max(*args):
     Parameters
     ----------
     *args: 
-        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
+        Variable length argument list. If all variables are `DiscreteDistribution`, then the maximum of the 
+        random variables is returned. 
+        
+        If two arguments are passed (first: DiscreteDistribution; second: int), then the pi-operator is applied.
+        The pi-operator means the maximum of the random variable and the value m. 
+        The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
+        The following two expressions are identical: `max` and `pi_op`.
+        The random variable is passed as first parameter and m is passed as second parameter.
+    
+    
+    Returns
+    -------
+    DiscreteDistribution
+        Returns the conditional distribution for which the condition (applied to `xk`) is true. 
+        The resulting distribution is normalized if the paraemter `normalized` is true.
+
+    Example
+    -------    
+    &gt;&gt;&gt; A = DU(0,4)
+    &gt;&gt;&gt; max(A, DET(3))
+    discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
+        
     
     Example
     -------    
@@ -933,7 +954,19 @@ def max(*args):
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+    bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
+    if all(bools):
+        xmax = max([Ai.xmax for Ai in args])
+        xmin = min([Ai.xmin for Ai in args])
+        x = np.arange(xmin, xmax+1, dtype=int)
+        cdfs = np.zeros( (len(args),len(x)) )
+        for i,Ai in enumerate(args):
+            cdfs[i,:] = Ai.cdf(x)
+        
+        mycdf = np.prod( cdfs, axis=0)
+        mypmf = np.diff(np.insert(mycdf,0,0))
+        return DiscreteDistribution(x,mypmf.clip(0,1))
+    elif len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
         return pi_op(args[0], args[1])
     else:
         return oldmax(*args)
@@ -1754,12 +1787,12 @@ A random variable $A$ is now constructed in such a way that with the probability
 <dd>Returns a shifted geometric distribution with mean EX.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DET(4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DET(4)
 &gt;&gt;&gt; B = DU(1,10)
 &gt;&gt;&gt; C = MIX( (A,B) )
 &gt;&gt;&gt; D = A+B
 </code></pre>
-<pre><code class="python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
+<pre><code class="language-python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
 &gt;&gt;&gt; A.plotCDF(label='A')
 &gt;&gt;&gt; B.plotCDF(label='B')
 &gt;&gt;&gt; C.plotCDF(label='MIX')
@@ -2190,17 +2223,37 @@ w_{n+1} (k)
 <span>def <span class="ident">max</span></span>(<span>*args)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns the pi-operator applied to the distribution A.</p>
+<div class="desc"><p>Returns the maximum of the random variables. </p>
 <p>The pi-operator means the maximum of the random variable and the value m.
 The random variable A is passed as first parameter <code>A=args[0]</code> and m is passed as second parameter <code>m=args[1]</code>.
 The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a></code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a></code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>*args</code></strong></dt>
-<dd>Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.</dd>
+<dd>
+<p>Variable length argument list. If all variables are <code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code>, then the maximum of the
+random variables is returned. </p>
+<p>If two arguments are passed (first: DiscreteDistribution; second: int), then the pi-operator is applied.
+The pi-operator means the maximum of the random variable and the value m.
+The random variable A is passed as first parameter <code>A=args[0]</code> and m is passed as second parameter <code>m=args[1]</code>.
+The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a></code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a></code>.
+The random variable is passed as first parameter and m is passed as second parameter.</p>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>Returns the conditional distribution for which the condition (applied to <code>xk</code>) is true.
+The resulting distribution is normalized if the paraemter <code>normalized</code> is true.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
+&gt;&gt;&gt; max(A, DET(3))
+discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
+
+</code></pre>
+<h2 id="example_1">Example</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = max(A,3)
 pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
 </code></pre>
@@ -2211,7 +2264,7 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def max(*args):    
-    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+    r&#34;&#34;&#34;Returns the maximum of the random variables. 
         
     The pi-operator means the maximum of the random variable and the value m. 
     The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
@@ -2220,7 +2273,28 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     Parameters
     ----------
     *args: 
-        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
+        Variable length argument list. If all variables are `DiscreteDistribution`, then the maximum of the 
+        random variables is returned. 
+        
+        If two arguments are passed (first: DiscreteDistribution; second: int), then the pi-operator is applied.
+        The pi-operator means the maximum of the random variable and the value m. 
+        The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
+        The following two expressions are identical: `max` and `pi_op`.
+        The random variable is passed as first parameter and m is passed as second parameter.
+    
+    
+    Returns
+    -------
+    DiscreteDistribution
+        Returns the conditional distribution for which the condition (applied to `xk`) is true. 
+        The resulting distribution is normalized if the paraemter `normalized` is true.
+
+    Example
+    -------    
+    &gt;&gt;&gt; A = DU(0,4)
+    &gt;&gt;&gt; max(A, DET(3))
+    discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
+        
     
     Example
     -------    
@@ -2232,7 +2306,19 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+    bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
+    if all(bools):
+        xmax = max([Ai.xmax for Ai in args])
+        xmin = min([Ai.xmin for Ai in args])
+        x = np.arange(xmin, xmax+1, dtype=int)
+        cdfs = np.zeros( (len(args),len(x)) )
+        for i,Ai in enumerate(args):
+            cdfs[i,:] = Ai.cdf(x)
+        
+        mycdf = np.prod( cdfs, axis=0)
+        mypmf = np.diff(np.insert(mycdf,0,0))
+        return DiscreteDistribution(x,mypmf.clip(0,1))
+    elif len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
         return pi_op(args[0], args[1])
     else:
         return oldmax(*args)</code></pre>
@@ -2939,7 +3025,7 @@ distribution which is used when printing an instance of the class, see e.g.
         
         i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
         mypk = np.zeros(len(xi))
-        
+        mypk[xi&gt;=self.xmax] = 1
         if len(i)&gt;0:            
             mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
         return mypk
@@ -3145,7 +3231,7 @@ distribution which is used when printing an instance of the class, see e.g.
     
     i = np.where( (xi&gt;=self.xmin) &amp; (xi&lt;=self.xmax) )[0]
     mypk = np.zeros(len(xi))
-    
+    mypk[xi&gt;=self.xmax] = 1
     if len(i)&gt;0:            
         mypk[i] = PK[np.searchsorted(self.xk, xi[i], side=&#39;left&#39;)]
     return mypk</code></pre>
@@ -3266,7 +3352,7 @@ The operator <code>+</code> is overloaded for that class, such that <code>A+B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.conv(A) # returns A+A
 &gt;&gt;&gt; DiscreteDistribution.conv(A,A) # returns A+A
 &gt;&gt;&gt; A+A # returns A+A
@@ -3328,7 +3414,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.convNeg(A) # returns A-A
 &gt;&gt;&gt; DiscreteDistribution.convNeg(A,A) # returns A-A
 &gt;&gt;&gt; A-A # returns A-A
@@ -3410,7 +3496,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 </p>
 <p>This method prints basic characteristics of the distribution.</p>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A.describe()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A.describe()
     interarrival_time: EX=5.5000, cX=0.5222, mode=1
 </code></pre></div>
 <details class="source">

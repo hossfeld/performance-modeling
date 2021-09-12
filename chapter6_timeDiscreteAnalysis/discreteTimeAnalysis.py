@@ -652,7 +652,7 @@ class DiscreteDistribution:
         
         i = np.where( (xi>=self.xmin) & (xi<=self.xmax) )[0]
         mypk = np.zeros(len(xi))
-        
+        mypk[xi>=self.xmax] = 1
         if len(i)>0:            
             mypk[i] = PK[np.searchsorted(self.xk, xi[i], side='left')]
         return mypk
@@ -836,7 +836,7 @@ def pi0(A, name=None):
 
 oldmax = max    
 def max(*args):    
-    r"""Returns the pi-operator applied to the distribution A.
+    r"""Returns the maximum of the random variables. 
         
     The pi-operator means the maximum of the random variable and the value m. 
     The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
@@ -845,7 +845,28 @@ def max(*args):
     Parameters
     ----------
     *args: 
-        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
+        Variable length argument list. If all variables are `DiscreteDistribution`, then the maximum of the 
+        random variables is returned. 
+        
+        If two arguments are passed (first: DiscreteDistribution; second: int), then the pi-operator is applied.
+        The pi-operator means the maximum of the random variable and the value m. 
+        The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
+        The following two expressions are identical: `max` and `pi_op`.
+        The random variable is passed as first parameter and m is passed as second parameter.
+    
+    
+    Returns
+    -------
+    DiscreteDistribution
+        Returns the conditional distribution for which the condition (applied to `xk`) is true. 
+        The resulting distribution is normalized if the paraemter `normalized` is true.
+
+    Example
+    -------    
+    >>> A = DU(0,4)
+    >>> max(A, DET(3))
+    discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
+        
     
     Example
     -------    
@@ -857,7 +878,19 @@ def max(*args):
     ----------
     `DiscreteDistribution.pi_op`
     """ 
-    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+    bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
+    if all(bools):
+        xmax = max([Ai.xmax for Ai in args])
+        xmin = min([Ai.xmin for Ai in args])
+        x = np.arange(xmin, xmax+1, dtype=int)
+        cdfs = np.zeros( (len(args),len(x)) )
+        for i,Ai in enumerate(args):
+            cdfs[i,:] = Ai.cdf(x)
+        
+        mycdf = np.prod( cdfs, axis=0)
+        mypmf = np.diff(np.insert(mycdf,0,0))
+        return DiscreteDistribution(x,mypmf.clip(0,1))
+    elif len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
         return pi_op(args[0], args[1])
     else:
         return oldmax(*args)
