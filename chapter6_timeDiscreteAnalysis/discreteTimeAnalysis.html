@@ -146,10 +146,11 @@ The text book is published as open access book and can be downloaded at
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import time
 
 comparisonEQ_eps = 1e-6
 &#34;&#34;&#34;The variable is used for the numerical comparison of two random variables `A`and `B`. 
-The comparison `A==B` returns true if `abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps`. 
+The comparison `A==B` returns true if `abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps`. Default value is 1e-6.
 
 &#34;&#34;&#34;
 
@@ -809,7 +810,25 @@ class DiscreteDistribution:
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
-    
+    def rvs(self, size=1, seed=None):
+        r&#34;&#34;&#34;Returns random values of this distribution. 
+
+        Parameters
+        ----------
+        size : int (default 1)
+            Number of random values to generate.        
+        seed : int (default None)
+            Random number generator seed. The default value is None to generate a random seed.        
+            
+        Returns
+        -------
+        Numpy array
+            Returns numpy array of random values of this distribution.                         
+        &#34;&#34;&#34;     
+        if seed is None: seed = int(time.time())
+        np.random.seed(seed)
+        return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
+        
     # A+B
     def __add__(self, other):                
         return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
@@ -826,17 +845,17 @@ class DiscreteDistribution:
             return DiscreteDistribution(B.xk*A,B.pk,name=f&#39;{A}*{B.name}&#39;)
             
     # A&lt;B: based on means
-    def __lt__(self, other):                        
-        return self.mean() &lt; other.mean()
+    def __lt__(self, other):        
+        return self.mean() &lt; other.mean()        
     
     # A&lt;=B: based on means
     def __le__(self, other):                        
         return self.mean() &lt;= other.mean()
     
     # A&gt;B: based on means
-    def __gt__(self, other):                        
+    def __gt__(self, other):  
         return self.mean() &gt; other.mean()
-    
+                    
     # A&gt;=B: based on means
     def __ge__(self, other):                        
         return self.mean() &gt;= other.mean()
@@ -855,8 +874,7 @@ class DiscreteDistribution:
         end = np.zeros(xmax-self.xmax) if self.xmax &lt; xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin &gt; xmin else []    
         return np.concatenate((start, self.pk, end))
-        
-        
+                    
     # A|condition
     def __or__(self, other):
         if callable(other):  # A|condition
@@ -881,14 +899,29 @@ def pi_op(A, m=0, name=None):
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    return A.pi_op(m, name)
+    return A.pi_op(m, name)        
 
-        
-def max(A, m, name=None):    
-    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+def pi0(A, name=None):
+    r&#34;&#34;&#34;Returns the pi0-operator applied to A.
     
-    The pi-operator means the maximum of this random variable and the value m. 
+    See also
+    ----------
+    `DiscreteDistribution.pi0`
+    &#34;&#34;&#34; 
+    return A.pi0(name=name)    
+
+oldmax = max    
+def max(*args):    
+    r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
+        
+    The pi-operator means the maximum of the random variable and the value m. 
+    The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
     The following two expressions are identical: `max` and `pi_op`.
+    
+    Parameters
+    ----------
+    *args: 
+        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
     
     Example
     -------    
@@ -900,16 +933,11 @@ def max(A, m, name=None):
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    return A.pi_op(m, name)
-
-def pi0(A, name=None):
-    r&#34;&#34;&#34;Returns the pi0-operator applied to A.
+    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+        return pi_op(args[0], args[1])
+    else:
+        return oldmax(*args)
     
-    See also
-    ----------
-    `DiscreteDistribution.pi0`
-    &#34;&#34;&#34; 
-    return A.pi0(name=name)    
 
 def conv(A,B,name=None):
     r&#34;&#34;&#34;Returns the sum of the random variables A+B using convolution operator.
@@ -1354,7 +1382,7 @@ def MIX(A, w=None, name=None):
 <dt id="discreteTimeAnalysis.comparisonEQ_eps"><code class="name">var <span class="ident">comparisonEQ_eps</span></code></dt>
 <dd>
 <div class="desc"><p>The variable is used for the numerical comparison of two random variables <code>A</code>and <code>B</code>.
-The comparison <code>A==B</code> returns true if <code>abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps</code>.</p></div>
+The comparison <code>A==B</code> returns true if <code>abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps</code>. Default value is 1e-6.</p></div>
 </dd>
 </dl>
 </section>
@@ -2159,12 +2187,18 @@ w_{n+1} (k)
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.max"><code class="name flex">
-<span>def <span class="ident">max</span></span>(<span>A, m, name=None)</span>
+<span>def <span class="ident">max</span></span>(<span>*args)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the pi-operator applied to the distribution A.</p>
-<p>The pi-operator means the maximum of this random variable and the value m.
+<p>The pi-operator means the maximum of the random variable and the value m.
+The random variable A is passed as first parameter <code>A=args[0]</code> and m is passed as second parameter <code>m=args[1]</code>.
 The following two expressions are identical: <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a></code> and <code><a title="discreteTimeAnalysis.pi_op" href="#discreteTimeAnalysis.pi_op">pi_op()</a></code>.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>*args</code></strong></dt>
+<dd>Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.</dd>
+</dl>
 <h2 id="example">Example</h2>
 <pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = max(A,3)
@@ -2176,11 +2210,17 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def max(A, m, name=None):    
+<pre><code class="python">def max(*args):    
     r&#34;&#34;&#34;Returns the pi-operator applied to the distribution A.
-    
-    The pi-operator means the maximum of this random variable and the value m. 
+        
+    The pi-operator means the maximum of the random variable and the value m. 
+    The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
     The following two expressions are identical: `max` and `pi_op`.
+    
+    Parameters
+    ----------
+    *args: 
+        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
     
     Example
     -------    
@@ -2192,7 +2232,10 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    return A.pi_op(m, name)</code></pre>
+    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+        return pi_op(args[0], args[1])
+    else:
+        return oldmax(*args)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.pi0"><code class="name flex">
@@ -2234,7 +2277,7 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     ----------
     `DiscreteDistribution.pi_op`
     &#34;&#34;&#34; 
-    return A.pi_op(m, name)</code></pre>
+    return A.pi_op(m, name)        </code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.plotCDF"><code class="name flex">
@@ -2978,7 +3021,25 @@ distribution which is used when printing an instance of the class, see e.g.
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
-    
+    def rvs(self, size=1, seed=None):
+        r&#34;&#34;&#34;Returns random values of this distribution. 
+
+        Parameters
+        ----------
+        size : int (default 1)
+            Number of random values to generate.        
+        seed : int (default None)
+            Random number generator seed. The default value is None to generate a random seed.        
+            
+        Returns
+        -------
+        Numpy array
+            Returns numpy array of random values of this distribution.                         
+        &#34;&#34;&#34;     
+        if seed is None: seed = int(time.time())
+        np.random.seed(seed)
+        return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
+        
     # A+B
     def __add__(self, other):                
         return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
@@ -2995,17 +3056,17 @@ distribution which is used when printing an instance of the class, see e.g.
             return DiscreteDistribution(B.xk*A,B.pk,name=f&#39;{A}*{B.name}&#39;)
             
     # A&lt;B: based on means
-    def __lt__(self, other):                        
-        return self.mean() &lt; other.mean()
+    def __lt__(self, other):        
+        return self.mean() &lt; other.mean()        
     
     # A&lt;=B: based on means
     def __le__(self, other):                        
         return self.mean() &lt;= other.mean()
     
     # A&gt;B: based on means
-    def __gt__(self, other):                        
+    def __gt__(self, other):  
         return self.mean() &gt; other.mean()
-    
+                    
     # A&gt;=B: based on means
     def __ge__(self, other):                        
         return self.mean() &gt;= other.mean()
@@ -3024,8 +3085,7 @@ distribution which is used when printing an instance of the class, see e.g.
         end = np.zeros(xmax-self.xmax) if self.xmax &lt; xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin &gt; xmin else []    
         return np.concatenate((start, self.pk, end))
-        
-        
+                    
     # A|condition
     def __or__(self, other):
         if callable(other):  # A|condition
@@ -3769,6 +3829,47 @@ for the 95%-quantile. It must be ensured that <span><span class="MathJax_Preview
     return self.xk[np.argmax(self.pk.cumsum()&gt;q)]</code></pre>
 </details>
 </dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.rvs"><code class="name flex">
+<span>def <span class="ident">rvs</span></span>(<span>self, size=1, seed=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns random values of this distribution. </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>size</code></strong> :&ensp;<code>int (default 1)</code></dt>
+<dd>Number of random values to generate.</dd>
+<dt><strong><code>seed</code></strong> :&ensp;<code>int (default None)</code></dt>
+<dd>Random number generator seed. The default value is None to generate a random seed.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>Numpy array</code></dt>
+<dd>Returns numpy array of random values of this distribution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rvs(self, size=1, seed=None):
+    r&#34;&#34;&#34;Returns random values of this distribution. 
+
+    Parameters
+    ----------
+    size : int (default 1)
+        Number of random values to generate.        
+    seed : int (default None)
+        Random number generator seed. The default value is None to generate a random seed.        
+        
+    Returns
+    -------
+    Numpy array
+        Returns numpy array of random values of this distribution.                         
+    &#34;&#34;&#34;     
+    if seed is None: seed = int(time.time())
+    np.random.seed(seed)
+    return np.random.choice(self.xk, size=size, replace=True, p=self.pk)</code></pre>
+</details>
+</dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.sigmaTakeGEQ"><code class="name flex">
 <span>def <span class="ident">sigmaTakeGEQ</span></span>(<span>self, m=0, name=None, normalized=True)</span>
 </code></dt>
@@ -4229,6 +4330,7 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.plotPMF" href="#discreteTimeAnalysis.DiscreteDistribution.plotPMF">plotPMF</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.pmf" href="#discreteTimeAnalysis.DiscreteDistribution.pmf">pmf</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.quantile" href="#discreteTimeAnalysis.DiscreteDistribution.quantile">quantile</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.rvs" href="#discreteTimeAnalysis.DiscreteDistribution.rvs">rvs</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.sigmaTakeGEQ" href="#discreteTimeAnalysis.DiscreteDistribution.sigmaTakeGEQ">sigmaTakeGEQ</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.sigmaTakeLT" href="#discreteTimeAnalysis.DiscreteDistribution.sigmaTakeLT">sigmaTakeLT</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.std" href="#discreteTimeAnalysis.DiscreteDistribution.std">std</a></code></li>

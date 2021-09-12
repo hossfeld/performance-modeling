@@ -70,10 +70,11 @@ The text book is published as open access book and can be downloaded at
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import time
 
 comparisonEQ_eps = 1e-6
 """The variable is used for the numerical comparison of two random variables `A`and `B`. 
-The comparison `A==B` returns true if `abs( A.mean() - B.mean() ) <= comparisonEQ_eps`. 
+The comparison `A==B` returns true if `abs( A.mean() - B.mean() ) <= comparisonEQ_eps`. Default value is 1e-6.
 
 """
 
@@ -733,7 +734,25 @@ class DiscreteDistribution:
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
-    
+    def rvs(self, size=1, seed=None):
+        r"""Returns random values of this distribution. 
+
+        Parameters
+        ----------
+        size : int (default 1)
+            Number of random values to generate.        
+        seed : int (default None)
+            Random number generator seed. The default value is None to generate a random seed.        
+            
+        Returns
+        -------
+        Numpy array
+            Returns numpy array of random values of this distribution.                         
+        """     
+        if seed is None: seed = int(time.time())
+        np.random.seed(seed)
+        return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
+        
     # A+B
     def __add__(self, other):                
         return DiscreteDistribution.conv(self,other,name=f'{self.name}+{other.name}')
@@ -750,17 +769,17 @@ class DiscreteDistribution:
             return DiscreteDistribution(B.xk*A,B.pk,name=f'{A}*{B.name}')
             
     # A<B: based on means
-    def __lt__(self, other):                        
-        return self.mean() < other.mean()
+    def __lt__(self, other):        
+        return self.mean() < other.mean()        
     
     # A<=B: based on means
     def __le__(self, other):                        
         return self.mean() <= other.mean()
     
     # A>B: based on means
-    def __gt__(self, other):                        
+    def __gt__(self, other):  
         return self.mean() > other.mean()
-    
+                    
     # A>=B: based on means
     def __ge__(self, other):                        
         return self.mean() >= other.mean()
@@ -779,8 +798,7 @@ class DiscreteDistribution:
         end = np.zeros(xmax-self.xmax) if self.xmax < xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin > xmin else []    
         return np.concatenate((start, self.pk, end))
-        
-        
+                    
     # A|condition
     def __or__(self, other):
         if callable(other):  # A|condition
@@ -805,14 +823,29 @@ def pi_op(A, m=0, name=None):
     ----------
     `DiscreteDistribution.pi_op`
     """ 
-    return A.pi_op(m, name)
+    return A.pi_op(m, name)        
 
-        
-def max(A, m, name=None):    
-    r"""Returns the pi-operator applied to the distribution A.
+def pi0(A, name=None):
+    r"""Returns the pi0-operator applied to A.
     
-    The pi-operator means the maximum of this random variable and the value m. 
+    See also
+    ----------
+    `DiscreteDistribution.pi0`
+    """ 
+    return A.pi0(name=name)    
+
+oldmax = max    
+def max(*args):    
+    r"""Returns the pi-operator applied to the distribution A.
+        
+    The pi-operator means the maximum of the random variable and the value m. 
+    The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
     The following two expressions are identical: `max` and `pi_op`.
+    
+    Parameters
+    ----------
+    *args: 
+        Variable length argument list. The random variable is passed as first parameter and m is passed as second parameter.
     
     Example
     -------    
@@ -824,16 +857,11 @@ def max(A, m, name=None):
     ----------
     `DiscreteDistribution.pi_op`
     """ 
-    return A.pi_op(m, name)
-
-def pi0(A, name=None):
-    r"""Returns the pi0-operator applied to A.
+    if len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
+        return pi_op(args[0], args[1])
+    else:
+        return oldmax(*args)
     
-    See also
-    ----------
-    `DiscreteDistribution.pi0`
-    """ 
-    return A.pi0(name=name)    
 
 def conv(A,B,name=None):
     r"""Returns the sum of the random variables A+B using convolution operator.
