@@ -997,6 +997,7 @@ def min(*args):
     -------    
     &gt;&gt;&gt; A = DU(0,4)
     &gt;&gt;&gt; B = DET(2)
+    &gt;&gt;&gt; min(A,B)
     discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     &#34;&#34;&#34; 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
@@ -2392,6 +2393,7 @@ random variables is returned.</dd>
 <h2 id="example">Example</h2>
 <pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = DET(2)
+&gt;&gt;&gt; min(A,B)
 discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]
 </code></pre></div>
 <details class="source">
@@ -2419,6 +2421,7 @@ discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]
     -------    
     &gt;&gt;&gt; A = DU(0,4)
     &gt;&gt;&gt; B = DET(2)
+    &gt;&gt;&gt; min(A,B)
     discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     &#34;&#34;&#34; 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]

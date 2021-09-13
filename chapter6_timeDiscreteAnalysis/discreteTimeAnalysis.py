@@ -921,6 +921,7 @@ def min(*args):
     -------    
     >>> A = DU(0,4)
     >>> B = DET(2)
+    >>> min(A,B)
     discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     """ 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
