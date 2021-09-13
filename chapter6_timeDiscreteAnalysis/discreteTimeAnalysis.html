@@ -344,7 +344,7 @@ class DiscreteDistribution:
             interarrival_time: EX=5.5000, cX=0.5222, mode=1 
                         
         &#34;&#34;&#34;               
-        print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} &#39;)
+        print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()}, support={self.xmin},...,{self.xmax} &#39;)
 
     def checkDistribution(self):
         r&#34;&#34;&#34;Returns if the distribution is valid.         
@@ -1526,7 +1526,8 @@ def DET(EX, name=None):
     DiscreteDistribution
         Returns a deterministic distribution with parameter EX.        
     &#34;&#34;&#34;     
-    return DiscreteDistribution([EX], [1.0], name=name)
+    s = f&#39;DET({EX})&#39; if name is None else name
+    return DiscreteDistribution([EX], [1.0], name=s)
     
 def DU(a=1, b=10, name=None):    
     r&#34;&#34;&#34;Returns a discrete uniform distribution in the range [a,b].
@@ -1554,16 +1555,20 @@ def DU(a=1, b=10, name=None):
     pk = 1.0/n
     return DiscreteDistribution(xk, np.array([pk]*n), name=s)    
 
-def GEOM(EX, m=0, eps=1e-8, name=None):
-    r&#34;&#34;&#34;Returns a shifted geometric distribution with mean EX.
+def GEOM(EX=1, p=None, m=0, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a shifted geometric distribution with mean EX or parameter p.
 
     A shifted geometric distribution is returned which has the mean value `EX`. 
     The distribution is thereby shifted by `m`. Thus, \(P(X=k=0\) for any \(k&lt;m\).
+                                                        
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
     
     Parameters
     ----------
-    EX : float
+    EX : float (default 1)
         Mean value of the shifted geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
     m : integer (default 0)
         Distribution is shifted by m.    
     eps : float, optional (default 1e-8)
@@ -1575,15 +1580,66 @@ def GEOM(EX, m=0, eps=1e-8, name=None):
     -------
     DiscreteDistribution
         Returns a shifted geometric distribution with mean EX.        
-    &#34;&#34;&#34;        
-    p = 1.0/(EX+1-m)    
+    &#34;&#34;&#34;   
+    if p is None:     
+        p = 1.0/(EX+1-m)    
+    else:
+        EX = p
     rv = geom(p, loc=m-1)
     cut = int(rv.isf(eps))    
     x = np.arange(cut)
     pk = rv.pmf(x)
     
-    s = f&#39;GEOM_{m}({p:.2f})&#39; if name is None else name   
+    s = f&#39;GEOM_{m}({EX:.2f})&#39; if name is None else name   
     return DiscreteDistribution(x, pk/pk.sum(), name=s)
+
+def GEOM0(EX=1, p=None, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a geometric distribution with mean EX or parameter p.
+
+    A geometric distribution is returned which has the mean value `EX`. 
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
+    
+    Parameters
+    ----------
+    EX : float (default 1)
+        Mean value of the geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default &#39;GEOM_m(p)&#39;)
+        Name of the distribution for string representation.
+
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a geometric distribution with mean EX.        
+    &#34;&#34;&#34;   
+    return GEOM(EX=EX, p=p, eps=eps, name=name)
+
+def GEOM1(EX=1, p=None, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a geometric distribution (shifted by one) with mean EX or parameter p.
+
+    A geometric distribution (shifted by one) is returned which has the mean value `EX`. 
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
+    
+    Parameters
+    ----------
+    EX : float (default 1)
+        Mean value of the shifted geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default &#39;GEOM_m(p)&#39;)
+        Name of the distribution for string representation.
+
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a geometric distribution with mean EX.        
+    &#34;&#34;&#34;   
+    return GEOM(EX=EX, p=p, m=1, eps=eps, name=name)
 
 
 #%% mixture distribution
@@ -1814,7 +1870,8 @@ a Bernoulli experiment is repeated N-times with success probability p.</p>
     DiscreteDistribution
         Returns a deterministic distribution with parameter EX.        
     &#34;&#34;&#34;     
-    return DiscreteDistribution([EX], [1.0], name=name)</code></pre>
+    s = f&#39;DET({EX})&#39; if name is None else name
+    return DiscreteDistribution([EX], [1.0], name=s)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DU"><code class="name flex">
@@ -1869,16 +1926,20 @@ a Bernoulli experiment is repeated N-times with success probability p.</p>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.GEOM"><code class="name flex">
-<span>def <span class="ident">GEOM</span></span>(<span>EX, m=0, eps=1e-08, name=None)</span>
+<span>def <span class="ident">GEOM</span></span>(<span>EX=1, p=None, m=0, eps=1e-08, name=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns a shifted geometric distribution with mean EX.</p>
+<div class="desc"><p>Returns a shifted geometric distribution with mean EX or parameter p.</p>
 <p>A shifted geometric distribution is returned which has the mean value <code>EX</code>.
 The distribution is thereby shifted by <code>m</code>. Thus, <span><span class="MathJax_Preview">P(X=k=0</span><script type="math/tex">P(X=k=0</script></span> for any <span><span class="MathJax_Preview">k&lt;m</span><script type="math/tex">k<m</script></span>.</p>
+<p>If the parameter p is provided, then p is used and EX is ignored.
+</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>EX</code></strong> :&ensp;<code>float</code></dt>
+<dt><strong><code>EX</code></strong> :&ensp;<code>float (default 1)</code></dt>
 <dd>Mean value of the shifted geometric distribution.</dd>
+<dt><strong><code>p</code></strong> :&ensp;<code>float (default None)</code></dt>
+<dd>If the parameter p is provided, then p is used and EX is ignored.</dd>
 <dt><strong><code>m</code></strong> :&ensp;<code>integer (default 0)</code></dt>
 <dd>Distribution is shifted by m.</dd>
 <dt><strong><code>eps</code></strong> :&ensp;<code>float</code>, optional <code>(default 1e-8)</code></dt>
@@ -1895,16 +1956,20 @@ The distribution is thereby shifted by <code>m</code>. Thus, <span><span class="
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def GEOM(EX, m=0, eps=1e-8, name=None):
-    r&#34;&#34;&#34;Returns a shifted geometric distribution with mean EX.
+<pre><code class="python">def GEOM(EX=1, p=None, m=0, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a shifted geometric distribution with mean EX or parameter p.
 
     A shifted geometric distribution is returned which has the mean value `EX`. 
     The distribution is thereby shifted by `m`. Thus, \(P(X=k=0\) for any \(k&lt;m\).
+                                                        
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
     
     Parameters
     ----------
-    EX : float
+    EX : float (default 1)
         Mean value of the shifted geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
     m : integer (default 0)
         Distribution is shifted by m.    
     eps : float, optional (default 1e-8)
@@ -1916,15 +1981,124 @@ The distribution is thereby shifted by <code>m</code>. Thus, <span><span class="
     -------
     DiscreteDistribution
         Returns a shifted geometric distribution with mean EX.        
-    &#34;&#34;&#34;        
-    p = 1.0/(EX+1-m)    
+    &#34;&#34;&#34;   
+    if p is None:     
+        p = 1.0/(EX+1-m)    
+    else:
+        EX = p
     rv = geom(p, loc=m-1)
     cut = int(rv.isf(eps))    
     x = np.arange(cut)
     pk = rv.pmf(x)
     
-    s = f&#39;GEOM_{m}({p:.2f})&#39; if name is None else name   
+    s = f&#39;GEOM_{m}({EX:.2f})&#39; if name is None else name   
     return DiscreteDistribution(x, pk/pk.sum(), name=s)</code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.GEOM0"><code class="name flex">
+<span>def <span class="ident">GEOM0</span></span>(<span>EX=1, p=None, eps=1e-08, name=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a geometric distribution with mean EX or parameter p.</p>
+<p>A geometric distribution is returned which has the mean value <code>EX</code>.
+If the parameter p is provided, then p is used and EX is ignored.
+</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>EX</code></strong> :&ensp;<code>float (default 1)</code></dt>
+<dd>Mean value of the geometric distribution.</dd>
+<dt><strong><code>p</code></strong> :&ensp;<code>float (default None)</code></dt>
+<dd>If the parameter p is provided, then p is used and EX is ignored.</dd>
+<dt><strong><code>eps</code></strong> :&ensp;<code>float</code>, optional <code>(default 1e-8)</code></dt>
+<dd>Threshold value where to truncate the right part of the CDF.</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>string</code>, optional <code>(default 'GEOM_m(p)')</code></dt>
+<dd>Name of the distribution for string representation.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>Returns a geometric distribution with mean EX.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GEOM0(EX=1, p=None, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a geometric distribution with mean EX or parameter p.
+
+    A geometric distribution is returned which has the mean value `EX`. 
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
+    
+    Parameters
+    ----------
+    EX : float (default 1)
+        Mean value of the geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default &#39;GEOM_m(p)&#39;)
+        Name of the distribution for string representation.
+
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a geometric distribution with mean EX.        
+    &#34;&#34;&#34;   
+    return GEOM(EX=EX, p=p, eps=eps, name=name)</code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.GEOM1"><code class="name flex">
+<span>def <span class="ident">GEOM1</span></span>(<span>EX=1, p=None, eps=1e-08, name=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a geometric distribution (shifted by one) with mean EX or parameter p.</p>
+<p>A geometric distribution (shifted by one) is returned which has the mean value <code>EX</code>.
+If the parameter p is provided, then p is used and EX is ignored.
+</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>EX</code></strong> :&ensp;<code>float (default 1)</code></dt>
+<dd>Mean value of the shifted geometric distribution.</dd>
+<dt><strong><code>p</code></strong> :&ensp;<code>float (default None)</code></dt>
+<dd>If the parameter p is provided, then p is used and EX is ignored.</dd>
+<dt><strong><code>eps</code></strong> :&ensp;<code>float</code>, optional <code>(default 1e-8)</code></dt>
+<dd>Threshold value where to truncate the right part of the CDF.</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>string</code>, optional <code>(default 'GEOM_m(p)')</code></dt>
+<dd>Name of the distribution for string representation.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>Returns a geometric distribution with mean EX.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def GEOM1(EX=1, p=None, eps=1e-8, name=None):
+    r&#34;&#34;&#34;Returns a geometric distribution (shifted by one) with mean EX or parameter p.
+
+    A geometric distribution (shifted by one) is returned which has the mean value `EX`. 
+    If the parameter p is provided, then p is used and EX is ignored.                                                    
+    
+    Parameters
+    ----------
+    EX : float (default 1)
+        Mean value of the shifted geometric distribution.
+    p : float (default None)
+        If the parameter p is provided, then p is used and EX is ignored. 
+    eps : float, optional (default 1e-8)
+        Threshold value where to truncate the right part of the CDF.
+    name : string, optional (default &#39;GEOM_m(p)&#39;)
+        Name of the distribution for string representation.
+
+    Returns
+    -------
+    DiscreteDistribution
+        Returns a geometric distribution with mean EX.        
+    &#34;&#34;&#34;   
+    return GEOM(EX=EX, p=p, m=1, eps=eps, name=name)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.GIGI1_waitingTime"><code class="name flex">
@@ -2931,7 +3105,7 @@ distribution which is used when printing an instance of the class, see e.g.
             interarrival_time: EX=5.5000, cX=0.5222, mode=1 
                         
         &#34;&#34;&#34;               
-        print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} &#39;)
+        print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()}, support={self.xmin},...,{self.xmax} &#39;)
 
     def checkDistribution(self):
         r&#34;&#34;&#34;Returns if the distribution is valid.         
@@ -3990,7 +4164,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
         interarrival_time: EX=5.5000, cX=0.5222, mode=1 
                     
     &#34;&#34;&#34;               
-    print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} &#39;)</code></pre>
+    print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()}, support={self.xmin},...,{self.xmax} &#39;)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.emd"><code class="name flex">
@@ -5098,6 +5272,8 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.DET" href="#discreteTimeAnalysis.DET">DET</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DU" href="#discreteTimeAnalysis.DU">DU</a></code></li>
 <li><code><a title="discreteTimeAnalysis.GEOM" href="#discreteTimeAnalysis.GEOM">GEOM</a></code></li>
+<li><code><a title="discreteTimeAnalysis.GEOM0" href="#discreteTimeAnalysis.GEOM0">GEOM0</a></code></li>
+<li><code><a title="discreteTimeAnalysis.GEOM1" href="#discreteTimeAnalysis.GEOM1">GEOM1</a></code></li>
 <li><code><a title="discreteTimeAnalysis.GIGI1_waitingTime" href="#discreteTimeAnalysis.GIGI1_waitingTime">GIGI1_waitingTime</a></code></li>
 <li><code><a title="discreteTimeAnalysis.MIX" href="#discreteTimeAnalysis.MIX">MIX</a></code></li>
 <li><code><a title="discreteTimeAnalysis.NEGBIN" href="#discreteTimeAnalysis.NEGBIN">NEGBIN</a></code></li>
