@@ -34,9 +34,14 @@ The module overloads the following operators, which make it convenient to implem
 
 `+` operator: The sum of two random variables means the convolution of their probability mass functions. 
 `A+B` calls the method `DiscreteDistribution.conv` and is identical to `A.conv(B)`, see the example above.
+It is also possible to add an integer value (i.e. convolution with a deterministic distribution).
 
 `-` operator: The difference of two random variables means the convolution of their probability mass functions. 
 `A-B` calls the method `DiscreteDistribution.convNeg` and is identical to `A.convNeg(B)`.
+It is also possible to subtract an integer value (i.e. negative convolution with a deterministic distribution).
+
+`-` operator: The unary minus operator is overloaded. `B=-A` returns a `DiscreteDistribution` with `B.pk = - A.pk`. 
+The two statements are identical: `-A+B` and `B-A`, if both are discrete distributions.
 
 `<` operator: The comparison is done based on means. Returns true if `A.mean() < B.mean()`
 
@@ -57,6 +62,11 @@ Returns true if `abs( A.mean() - B.mean() ) > comparisonEQ_eps`. This allows a c
 implementation of the power method.
 
 '|' operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+
+Distance metrics
+----------------
+The distance between two discrete distributions is available: Jensen-Shannon distance `DiscreteDistribution.jsd`;
+total variation distance `DiscreteDistribution.tvd`; earth mover's distance `DiscreteDistribution.emd`.
  
 Notes
 -----
@@ -178,6 +188,39 @@ class DiscreteDistribution:
         """               
         return self.std()/self.mean()
     
+    def skewness(self):
+        r"""Returns the skewness of the distribution.
+    
+    
+        Returns
+        -------
+        float
+            Skewness of the distribution.
+            
+        """               
+        EX3 = (self.xk**3)@self.pk
+        mu = self.mean()
+        sigma = self.std()
+        return (EX3-3*mu*sigma**2-mu**3)/(sigma**3)
+
+    def entropy(self, base=2):
+        r"""Returns the entropy of the distribution.
+    
+        Parameters
+        ----------
+        base : float (default 2)
+            Base of the logartihm. 
+            Base 2 gives the unit of bits (Shannon entropy).
+            
+        Returns
+        -------
+        float
+            Entropy of the distribution.
+            
+        """               
+        i = self.pk>0        
+        return -(self.pk[i] @ np.log2(self.pk[i])) / np.log2(base)
+
     def mode(self):
         r"""Returns the mode of the distribution.
     
@@ -381,6 +424,86 @@ class DiscreteDistribution:
 
         s = f'pi0({self.name})' if name is None else name
         return self.pi_op(m=0, name=s)
+    
+    def jsd(self, other ):
+        r"""Returns the  Jensen-Shannon distance of the two distributions.
+        
+        Returns the Jensen-Shannon distance which is the square root of the Jensen-Shannon divergence:
+        [Wikipedia: Jensen-Shannon distance](https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Jensen-Shannon distance.
+        
+                    
+        """                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+        M = (self.pmf(x)+other.pmf(x))/2
+        # Kullback-Leibler divergence D(P||M)        
+        Px = self.pmf(x)
+        i = (M>0) & (Px>0)
+        DPM = np.sum(Px[i]*np.log2(Px[i]/M[i]))
+        
+        Qx = other.pmf(x)
+        i = (M>0) & (Qx>0)
+        DQM = np.sum(Qx[i]*np.log2(Qx[i]/M[i]))
+        
+        return np.sqrt(DPM/2+DQM/2)
+    
+    # total variation distance
+    def tvd(self, other ):
+        r"""Returns the total variation distance of the two distributions.
+        
+        Computes the total variation distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Total variation distance.
+                    
+        """                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.pmf(x)-other.pmf(x)))/2
+        
+    # EMD
+    def emd(self, other ):
+        r"""Returns the earth mover's distance of the two distributions.
+        
+        Implements the earth mover's distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Earth mover's distance.
+              
+                    
+        """                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.cdf(x)-other.cdf(x)))    
     
     def _trim(self, m, normalize=True):
         r"""Truncates the distribution from left and right side. 
@@ -734,6 +857,19 @@ class DiscreteDistribution:
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
+    def normalize(self):
+        r"""Normalizes this random variable.
+
+        This method changes this discrete distribution and ensures that the sum of probabilities equals to one.
+            
+        Returns
+        -------
+        None            
+        """     
+        self.pk = self.pk.clip(0,1,self.pk)
+        self.pk = self.pk/self.pk.sum()
+
+
     def rvs(self, size=1, seed=None):
         r"""Returns random values of this distribution. 
 
@@ -754,19 +890,62 @@ class DiscreteDistribution:
         return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
         
     # A+B
-    def __add__(self, other):                
-        return DiscreteDistribution.conv(self,other,name=f'{self.name}+{other.name}')
+    def __add__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f'{self.name}+{other}')
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f'{self.name}+{other.name}')
+        else:
+            raise NotImplementedError       
+            
+        # A+B
+    def __radd__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f'{other}+{self.name}')
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f'{self.name}+{other.name}')
+        else:
+            raise NotImplementedError
     
     # A-C
-    def __sub__(self, other):                 
-        return DiscreteDistribution.convNeg(self,other,name=f'{self.name}-{other.name}')
-    
+    def __sub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f'{self.name}-{other}')
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f'{self.name}-{other.name}')
+        else:
+            raise NotImplementedError
+            
     # A-C
-    def __mul__(A, B):                 
-        if isinstance(A,DiscreteDistribution):
-            return DiscreteDistribution(A.xk*B,A.pk,name=f'{B}*{A.name}')
-        elif isinstance(B,DiscreteDistribution):
-            return DiscreteDistribution(B.xk*A,B.pk,name=f'{A}*{B.name}')
+    def __rsub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f'{other}-{self.name}')
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f'{self.name}-{other.name}')
+        else:
+            raise NotImplementedError
+    
+    # -A: unary minus
+    def __neg__(self):
+        return DiscreteDistribution(-self.xk,self.pk,name=f'-{self.name}')
+    
+    # +A: unary plus
+    def __pos__(self):
+        return DiscreteDistribution(self.xk,self.pk,name=f'+{self.name}')
+    
+    # A*b
+    def __mul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f'{self.name}*{b}')
+        else:
+            raise NotImplementedError 
+    
+    # b*A
+    def __rmul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f'{b}*{self.name}')
+        else:
+            raise NotImplementedError
             
     # A<B: based on means
     def __lt__(self, other):        
@@ -1373,3 +1552,7 @@ def MIX(A, w=None, name=None):
         pk[iA] += Ai.pk*wi
     s = 'MIX' if name is None else name   
     return DiscreteDistribution(xk, pk, name=s)
+
+#%%
+A = DU(1,5)
+B = DET(4)

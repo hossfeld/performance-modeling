@@ -40,7 +40,7 @@ Würzburg University Press. <br>
 In the example, we consider the sum of two random variables, which requires the convolution of the corresponding probability mass functions.
 The r.v. A follows a discrete uniform distribution in the range [0;10], while the r.v. B follows a negative binomial distribution,
 which is defined through the mean and the coefficient of variation.</p>
-<pre><code class="python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
+<pre><code class="language-python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
 &gt;&gt;&gt; A = dt.DU(a=0, b=10) % A ~ DU(0,10)
 &gt;&gt;&gt; EX, cX = 2.0, 1.5   % mean EX and coefficient of variation cX
 &gt;&gt;&gt; B = dt.NEGBIN(EX, cX) % negative binomial distribution
@@ -50,9 +50,13 @@ which is defined through the mean and the coefficient of variation.</p>
 <h2 id="operators">Operators</h2>
 <p>The module overloads the following operators, which make it convenient to implement comprehensive and well understandable code.</p>
 <p><code>+</code> operator: The sum of two random variables means the convolution of their probability mass functions.
-<code>A+B</code> calls the method <code><a title="discreteTimeAnalysis.DiscreteDistribution.conv" href="#discreteTimeAnalysis.DiscreteDistribution.conv">DiscreteDistribution.conv()</a></code> and is identical to <code>A.conv(B)</code>, see the example above.</p>
+<code>A+B</code> calls the method <code><a title="discreteTimeAnalysis.DiscreteDistribution.conv" href="#discreteTimeAnalysis.DiscreteDistribution.conv">DiscreteDistribution.conv()</a></code> and is identical to <code>A.conv(B)</code>, see the example above.
+It is also possible to add an integer value (i.e. convolution with a deterministic distribution).</p>
 <p><code>-</code> operator: The difference of two random variables means the convolution of their probability mass functions.
-<code>A-B</code> calls the method <code><a title="discreteTimeAnalysis.DiscreteDistribution.convNeg" href="#discreteTimeAnalysis.DiscreteDistribution.convNeg">DiscreteDistribution.convNeg()</a></code> and is identical to <code>A.convNeg(B)</code>.</p>
+<code>A-B</code> calls the method <code><a title="discreteTimeAnalysis.DiscreteDistribution.convNeg" href="#discreteTimeAnalysis.DiscreteDistribution.convNeg">DiscreteDistribution.convNeg()</a></code> and is identical to <code>A.convNeg(B)</code>.
+It is also possible to subtract an integer value (i.e. negative convolution with a deterministic distribution).</p>
+<p><code>-</code> operator: The unary minus operator is overloaded. <code>B=-A</code> returns a <code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code> with <code>B.pk = - A.pk</code>.
+The two statements are identical: <code>-A+B</code> and <code>B-A</code>, if both are discrete distributions.</p>
 <p><code>&lt;</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &lt; B.mean()</code></p>
 <p><code>&lt;=</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &lt;= B.mean()</code></p>
 <p><code>&gt;</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &gt; B.mean()</code></p>
@@ -66,6 +70,9 @@ threshold value <code><a title="discreteTimeAnalysis.comparisonEQ_eps" href="#di
 Returns true if <code>abs( A.mean() - B.mean() ) &gt; comparisonEQ_eps</code>. This allows a compact
 implementation of the power method.</p>
 <p>'|' operator: This operator is used as a shortcut for <code><a title="discreteTimeAnalysis.DiscreteDistribution.conditionalRV" href="#discreteTimeAnalysis.DiscreteDistribution.conditionalRV">DiscreteDistribution.conditionalRV()</a></code> which returns a conditional random variable.</p>
+<h2 id="distance-metrics">Distance Metrics</h2>
+<p>The distance between two discrete distributions is available: Jensen-Shannon distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.jsd" href="#discreteTimeAnalysis.DiscreteDistribution.jsd">DiscreteDistribution.jsd()</a></code>;
+total variation distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.tvd" href="#discreteTimeAnalysis.DiscreteDistribution.tvd">DiscreteDistribution.tvd()</a></code>; earth mover's distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.emd" href="#discreteTimeAnalysis.DiscreteDistribution.emd">DiscreteDistribution.emd()</a></code>.</p>
 <h2 id="notes">Notes</h2>
 <p>The theory behind the module is described in the book in Chapter 6.
 The text book is published as open access book and can be downloaded at
@@ -110,9 +117,14 @@ The module overloads the following operators, which make it convenient to implem
 
 `+` operator: The sum of two random variables means the convolution of their probability mass functions. 
 `A+B` calls the method `DiscreteDistribution.conv` and is identical to `A.conv(B)`, see the example above.
+It is also possible to add an integer value (i.e. convolution with a deterministic distribution).
 
 `-` operator: The difference of two random variables means the convolution of their probability mass functions. 
 `A-B` calls the method `DiscreteDistribution.convNeg` and is identical to `A.convNeg(B)`.
+It is also possible to subtract an integer value (i.e. negative convolution with a deterministic distribution).
+
+`-` operator: The unary minus operator is overloaded. `B=-A` returns a `DiscreteDistribution` with `B.pk = - A.pk`. 
+The two statements are identical: `-A+B` and `B-A`, if both are discrete distributions.
 
 `&lt;` operator: The comparison is done based on means. Returns true if `A.mean() &lt; B.mean()`
 
@@ -133,6 +145,11 @@ Returns true if `abs( A.mean() - B.mean() ) &gt; comparisonEQ_eps`. This allows 
 implementation of the power method.
 
 &#39;|&#39; operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+
+Distance metrics
+----------------
+The distance between two discrete distributions is available: Jensen-Shannon distance `DiscreteDistribution.jsd`;
+total variation distance `DiscreteDistribution.tvd`; earth mover&#39;s distance `DiscreteDistribution.emd`.
  
 Notes
 -----
@@ -254,6 +271,39 @@ class DiscreteDistribution:
         &#34;&#34;&#34;               
         return self.std()/self.mean()
     
+    def skewness(self):
+        r&#34;&#34;&#34;Returns the skewness of the distribution.
+    
+    
+        Returns
+        -------
+        float
+            Skewness of the distribution.
+            
+        &#34;&#34;&#34;               
+        EX3 = (self.xk**3)@self.pk
+        mu = self.mean()
+        sigma = self.std()
+        return (EX3-3*mu*sigma**2-mu**3)/(sigma**3)
+
+    def entropy(self, base=2):
+        r&#34;&#34;&#34;Returns the entropy of the distribution.
+    
+        Parameters
+        ----------
+        base : float (default 2)
+            Base of the logartihm. 
+            Base 2 gives the unit of bits (Shannon entropy).
+            
+        Returns
+        -------
+        float
+            Entropy of the distribution.
+            
+        &#34;&#34;&#34;               
+        i = self.pk&gt;0        
+        return -(self.pk[i] @ np.log2(self.pk[i])) / np.log2(base)
+
     def mode(self):
         r&#34;&#34;&#34;Returns the mode of the distribution.
     
@@ -457,6 +507,86 @@ class DiscreteDistribution:
 
         s = f&#39;pi0({self.name})&#39; if name is None else name
         return self.pi_op(m=0, name=s)
+    
+    def jsd(self, other ):
+        r&#34;&#34;&#34;Returns the  Jensen-Shannon distance of the two distributions.
+        
+        Returns the Jensen-Shannon distance which is the square root of the Jensen-Shannon divergence:
+        [Wikipedia: Jensen-Shannon distance](https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Jensen-Shannon distance.
+        
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+        M = (self.pmf(x)+other.pmf(x))/2
+        # Kullback-Leibler divergence D(P||M)        
+        Px = self.pmf(x)
+        i = (M&gt;0) &amp; (Px&gt;0)
+        DPM = np.sum(Px[i]*np.log2(Px[i]/M[i]))
+        
+        Qx = other.pmf(x)
+        i = (M&gt;0) &amp; (Qx&gt;0)
+        DQM = np.sum(Qx[i]*np.log2(Qx[i]/M[i]))
+        
+        return np.sqrt(DPM/2+DQM/2)
+    
+    # total variation distance
+    def tvd(self, other ):
+        r&#34;&#34;&#34;Returns the total variation distance of the two distributions.
+        
+        Computes the total variation distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Total variation distance.
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.pmf(x)-other.pmf(x)))/2
+        
+    # EMD
+    def emd(self, other ):
+        r&#34;&#34;&#34;Returns the earth mover&#39;s distance of the two distributions.
+        
+        Implements the earth mover&#39;s distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Earth mover&#39;s distance.
+              
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.cdf(x)-other.cdf(x)))    
     
     def _trim(self, m, normalize=True):
         r&#34;&#34;&#34;Truncates the distribution from left and right side. 
@@ -810,6 +940,19 @@ class DiscreteDistribution:
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
+    def normalize(self):
+        r&#34;&#34;&#34;Normalizes this random variable.
+
+        This method changes this discrete distribution and ensures that the sum of probabilities equals to one.
+            
+        Returns
+        -------
+        None            
+        &#34;&#34;&#34;     
+        self.pk = self.pk.clip(0,1,self.pk)
+        self.pk = self.pk/self.pk.sum()
+
+
     def rvs(self, size=1, seed=None):
         r&#34;&#34;&#34;Returns random values of this distribution. 
 
@@ -830,19 +973,62 @@ class DiscreteDistribution:
         return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
         
     # A+B
-    def __add__(self, other):                
-        return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+    def __add__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f&#39;{self.name}+{other}&#39;)
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+        else:
+            raise NotImplementedError       
+            
+        # A+B
+    def __radd__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f&#39;{other}+{self.name}&#39;)
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+        else:
+            raise NotImplementedError
     
     # A-C
-    def __sub__(self, other):                 
-        return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
-    
+    def __sub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f&#39;{self.name}-{other}&#39;)
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
+        else:
+            raise NotImplementedError
+            
     # A-C
-    def __mul__(A, B):                 
-        if isinstance(A,DiscreteDistribution):
-            return DiscreteDistribution(A.xk*B,A.pk,name=f&#39;{B}*{A.name}&#39;)
-        elif isinstance(B,DiscreteDistribution):
-            return DiscreteDistribution(B.xk*A,B.pk,name=f&#39;{A}*{B.name}&#39;)
+    def __rsub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f&#39;{other}-{self.name}&#39;)
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
+        else:
+            raise NotImplementedError
+    
+    # -A: unary minus
+    def __neg__(self):
+        return DiscreteDistribution(-self.xk,self.pk,name=f&#39;-{self.name}&#39;)
+    
+    # +A: unary plus
+    def __pos__(self):
+        return DiscreteDistribution(self.xk,self.pk,name=f&#39;+{self.name}&#39;)
+    
+    # A*b
+    def __mul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f&#39;{self.name}*{b}&#39;)
+        else:
+            raise NotImplementedError 
+    
+    # b*A
+    def __rmul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f&#39;{b}*{self.name}&#39;)
+        else:
+            raise NotImplementedError
             
     # A&lt;B: based on means
     def __lt__(self, other):        
@@ -1448,7 +1634,11 @@ def MIX(A, w=None, name=None):
         iA = np.searchsorted(xk, Ai.xk, side=&#39;left&#39;)
         pk[iA] += Ai.pk*wi
     s = &#39;MIX&#39; if name is None else name   
-    return DiscreteDistribution(xk, pk, name=s)</code></pre>
+    return DiscreteDistribution(xk, pk, name=s)
+
+#%%
+A = DU(1,5)
+B = DET(4)</code></pre>
 </details>
 </section>
 <section>
@@ -1831,12 +2021,12 @@ A random variable $A$ is now constructed in such a way that with the probability
 <dd>Returns a shifted geometric distribution with mean EX.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DET(4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DET(4)
 &gt;&gt;&gt; B = DU(1,10)
 &gt;&gt;&gt; C = MIX( (A,B) )
 &gt;&gt;&gt; D = A+B
 </code></pre>
-<pre><code class="python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
+<pre><code class="language-python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
 &gt;&gt;&gt; A.plotCDF(label='A')
 &gt;&gt;&gt; B.plotCDF(label='B')
 &gt;&gt;&gt; C.plotCDF(label='MIX')
@@ -2293,13 +2483,13 @@ The random variable is passed as first parameter and m is passed as second param
 <dd>Returns the maximum of the random variables.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; max(A, DET(3))
 discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
 
 </code></pre>
 <h2 id="example_1">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = max(A,3)
 pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
 </code></pre>
@@ -2391,7 +2581,7 @@ random variables is returned.</dd>
 <dd>Returns the minimum of the random variables.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = DET(2)
 &gt;&gt;&gt; min(A,B)
 discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]
@@ -2668,6 +2858,39 @@ distribution which is used when printing an instance of the class, see e.g.
         &#34;&#34;&#34;               
         return self.std()/self.mean()
     
+    def skewness(self):
+        r&#34;&#34;&#34;Returns the skewness of the distribution.
+    
+    
+        Returns
+        -------
+        float
+            Skewness of the distribution.
+            
+        &#34;&#34;&#34;               
+        EX3 = (self.xk**3)@self.pk
+        mu = self.mean()
+        sigma = self.std()
+        return (EX3-3*mu*sigma**2-mu**3)/(sigma**3)
+
+    def entropy(self, base=2):
+        r&#34;&#34;&#34;Returns the entropy of the distribution.
+    
+        Parameters
+        ----------
+        base : float (default 2)
+            Base of the logartihm. 
+            Base 2 gives the unit of bits (Shannon entropy).
+            
+        Returns
+        -------
+        float
+            Entropy of the distribution.
+            
+        &#34;&#34;&#34;               
+        i = self.pk&gt;0        
+        return -(self.pk[i] @ np.log2(self.pk[i])) / np.log2(base)
+
     def mode(self):
         r&#34;&#34;&#34;Returns the mode of the distribution.
     
@@ -2871,6 +3094,86 @@ distribution which is used when printing an instance of the class, see e.g.
 
         s = f&#39;pi0({self.name})&#39; if name is None else name
         return self.pi_op(m=0, name=s)
+    
+    def jsd(self, other ):
+        r&#34;&#34;&#34;Returns the  Jensen-Shannon distance of the two distributions.
+        
+        Returns the Jensen-Shannon distance which is the square root of the Jensen-Shannon divergence:
+        [Wikipedia: Jensen-Shannon distance](https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Jensen-Shannon distance.
+        
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+        M = (self.pmf(x)+other.pmf(x))/2
+        # Kullback-Leibler divergence D(P||M)        
+        Px = self.pmf(x)
+        i = (M&gt;0) &amp; (Px&gt;0)
+        DPM = np.sum(Px[i]*np.log2(Px[i]/M[i]))
+        
+        Qx = other.pmf(x)
+        i = (M&gt;0) &amp; (Qx&gt;0)
+        DQM = np.sum(Qx[i]*np.log2(Qx[i]/M[i]))
+        
+        return np.sqrt(DPM/2+DQM/2)
+    
+    # total variation distance
+    def tvd(self, other ):
+        r&#34;&#34;&#34;Returns the total variation distance of the two distributions.
+        
+        Computes the total variation distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Total variation distance.
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.pmf(x)-other.pmf(x)))/2
+        
+    # EMD
+    def emd(self, other ):
+        r&#34;&#34;&#34;Returns the earth mover&#39;s distance of the two distributions.
+        
+        Implements the earth mover&#39;s distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+                
+        Parameters
+        ----------
+        other : DiscreteDistribution
+            The other distribution.
+    
+        Returns
+        -------
+        float
+            Earth mover&#39;s distance.
+              
+                    
+        &#34;&#34;&#34;                
+        xmin = min(self.xmin, other.xmin)
+        xmax = max(self.xmax, other.xmax)
+        x = np.arange(xmin, xmax+1, dtype=int)
+                        
+        return np.sum(np.abs(self.cdf(x)-other.cdf(x)))    
     
     def _trim(self, m, normalize=True):
         r&#34;&#34;&#34;Truncates the distribution from left and right side. 
@@ -3224,6 +3527,19 @@ distribution which is used when printing an instance of the class, see e.g.
         else:
             return DiscreteDistribution(Axk, Apk, name=s)   
         
+    def normalize(self):
+        r&#34;&#34;&#34;Normalizes this random variable.
+
+        This method changes this discrete distribution and ensures that the sum of probabilities equals to one.
+            
+        Returns
+        -------
+        None            
+        &#34;&#34;&#34;     
+        self.pk = self.pk.clip(0,1,self.pk)
+        self.pk = self.pk/self.pk.sum()
+
+
     def rvs(self, size=1, seed=None):
         r&#34;&#34;&#34;Returns random values of this distribution. 
 
@@ -3244,19 +3560,62 @@ distribution which is used when printing an instance of the class, see e.g.
         return np.random.choice(self.xk, size=size, replace=True, p=self.pk)
         
     # A+B
-    def __add__(self, other):                
-        return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+    def __add__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f&#39;{self.name}+{other}&#39;)
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+        else:
+            raise NotImplementedError       
+            
+        # A+B
+    def __radd__(self, other):       
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk+other,self.pk,name=f&#39;{other}+{self.name}&#39;)
+        elif isinstance(other, DiscreteDistribution):            
+            return DiscreteDistribution.conv(self,other,name=f&#39;{self.name}+{other.name}&#39;)
+        else:
+            raise NotImplementedError
     
     # A-C
-    def __sub__(self, other):                 
-        return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
-    
+    def __sub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f&#39;{self.name}-{other}&#39;)
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
+        else:
+            raise NotImplementedError
+            
     # A-C
-    def __mul__(A, B):                 
-        if isinstance(A,DiscreteDistribution):
-            return DiscreteDistribution(A.xk*B,A.pk,name=f&#39;{B}*{A.name}&#39;)
-        elif isinstance(B,DiscreteDistribution):
-            return DiscreteDistribution(B.xk*A,B.pk,name=f&#39;{A}*{B.name}&#39;)
+    def __rsub__(self, other):   
+        if isinstance(other,int):
+            return DiscreteDistribution(self.xk-other,self.pk,name=f&#39;{other}-{self.name}&#39;)
+        elif isinstance(other, DiscreteDistribution):              
+            return DiscreteDistribution.convNeg(self,other,name=f&#39;{self.name}-{other.name}&#39;)
+        else:
+            raise NotImplementedError
+    
+    # -A: unary minus
+    def __neg__(self):
+        return DiscreteDistribution(-self.xk,self.pk,name=f&#39;-{self.name}&#39;)
+    
+    # +A: unary plus
+    def __pos__(self):
+        return DiscreteDistribution(self.xk,self.pk,name=f&#39;+{self.name}&#39;)
+    
+    # A*b
+    def __mul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f&#39;{self.name}*{b}&#39;)
+        else:
+            raise NotImplementedError 
+    
+    # b*A
+    def __rmul__(self, b):                 
+        if isinstance(b,int):
+            return DiscreteDistribution(self.xk*b,self.pk,name=f&#39;{b}*{self.name}&#39;)
+        else:
+            raise NotImplementedError
             
     # A&lt;B: based on means
     def __lt__(self, other):        
@@ -3469,7 +3828,7 @@ The operator <code>+</code> is overloaded for that class, such that <code>A+B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.conv(A) # returns A+A
 &gt;&gt;&gt; DiscreteDistribution.conv(A,A) # returns A+A
 &gt;&gt;&gt; A+A # returns A+A
@@ -3531,7 +3890,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.convNeg(A) # returns A-A
 &gt;&gt;&gt; DiscreteDistribution.convNeg(A,A) # returns A-A
 &gt;&gt;&gt; A-A # returns A-A
@@ -3613,7 +3972,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 </p>
 <p>This method prints basic characteristics of the distribution.</p>
 <h2 id="example">Example</h2>
-<pre><code class="python-repl">&gt;&gt;&gt; A.describe()
+<pre><code class="language-python-repl">&gt;&gt;&gt; A.describe()
     interarrival_time: EX=5.5000, cX=0.5222, mode=1
 </code></pre></div>
 <details class="source">
@@ -3632,6 +3991,145 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
                     
     &#34;&#34;&#34;               
     print(f&#39;{self.name}: EX={self.mean():.4f}, cX={self.cx():.4f}, mode={self.mode()} &#39;)</code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.emd"><code class="name flex">
+<span>def <span class="ident">emd</span></span>(<span>self, other)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the earth mover's distance of the two distributions.</p>
+<p>Implements the earth mover's distance: <a href="https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures">Wikipedia: Total variation distance</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>other</code></strong> :&ensp;<code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>The other distribution.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Earth mover's distance.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def emd(self, other ):
+    r&#34;&#34;&#34;Returns the earth mover&#39;s distance of the two distributions.
+    
+    Implements the earth mover&#39;s distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+            
+    Parameters
+    ----------
+    other : DiscreteDistribution
+        The other distribution.
+
+    Returns
+    -------
+    float
+        Earth mover&#39;s distance.
+          
+                
+    &#34;&#34;&#34;                
+    xmin = min(self.xmin, other.xmin)
+    xmax = max(self.xmax, other.xmax)
+    x = np.arange(xmin, xmax+1, dtype=int)
+                    
+    return np.sum(np.abs(self.cdf(x)-other.cdf(x)))    </code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.entropy"><code class="name flex">
+<span>def <span class="ident">entropy</span></span>(<span>self, base=2)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the entropy of the distribution.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>base</code></strong> :&ensp;<code>float (default 2)</code></dt>
+<dd>Base of the logartihm.
+Base 2 gives the unit of bits (Shannon entropy).</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Entropy of the distribution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def entropy(self, base=2):
+    r&#34;&#34;&#34;Returns the entropy of the distribution.
+
+    Parameters
+    ----------
+    base : float (default 2)
+        Base of the logartihm. 
+        Base 2 gives the unit of bits (Shannon entropy).
+        
+    Returns
+    -------
+    float
+        Entropy of the distribution.
+        
+    &#34;&#34;&#34;               
+    i = self.pk&gt;0        
+    return -(self.pk[i] @ np.log2(self.pk[i])) / np.log2(base)</code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.jsd"><code class="name flex">
+<span>def <span class="ident">jsd</span></span>(<span>self, other)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the
+Jensen-Shannon distance of the two distributions.</p>
+<p>Returns the Jensen-Shannon distance which is the square root of the Jensen-Shannon divergence:
+<a href="https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence">Wikipedia: Jensen-Shannon distance</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>other</code></strong> :&ensp;<code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>The other distribution.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Jensen-Shannon distance.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def jsd(self, other ):
+    r&#34;&#34;&#34;Returns the  Jensen-Shannon distance of the two distributions.
+    
+    Returns the Jensen-Shannon distance which is the square root of the Jensen-Shannon divergence:
+    [Wikipedia: Jensen-Shannon distance](https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)
+            
+    Parameters
+    ----------
+    other : DiscreteDistribution
+        The other distribution.
+
+    Returns
+    -------
+    float
+        Jensen-Shannon distance.
+    
+                
+    &#34;&#34;&#34;                
+    xmin = min(self.xmin, other.xmin)
+    xmax = max(self.xmax, other.xmax)
+    x = np.arange(xmin, xmax+1, dtype=int)
+    M = (self.pmf(x)+other.pmf(x))/2
+    # Kullback-Leibler divergence D(P||M)        
+    Px = self.pmf(x)
+    i = (M&gt;0) &amp; (Px&gt;0)
+    DPM = np.sum(Px[i]*np.log2(Px[i]/M[i]))
+    
+    Qx = other.pmf(x)
+    i = (M&gt;0) &amp; (Qx&gt;0)
+    DQM = np.sum(Qx[i]*np.log2(Qx[i]/M[i]))
+    
+    return np.sqrt(DPM/2+DQM/2)</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.mean"><code class="name flex">
@@ -3686,6 +4184,34 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
         
     &#34;&#34;&#34;                
     return self.xk[np.argmax(self.pk)]</code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.normalize"><code class="name flex">
+<span>def <span class="ident">normalize</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Normalizes this random variable.</p>
+<p>This method changes this discrete distribution and ensures that the sum of probabilities equals to one.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>None</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def normalize(self):
+    r&#34;&#34;&#34;Normalizes this random variable.
+
+    This method changes this discrete distribution and ensures that the sum of probabilities equals to one.
+        
+    Returns
+    -------
+    None            
+    &#34;&#34;&#34;     
+    self.pk = self.pk.clip(0,1,self.pk)
+    self.pk = self.pk/self.pk.sum()</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.pi0"><code class="name flex">
@@ -4283,6 +4809,36 @@ truncated range are returned.</dd>
     return DiscreteDistribution(xk, pk, name=s)</code></pre>
 </details>
 </dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.skewness"><code class="name flex">
+<span>def <span class="ident">skewness</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the skewness of the distribution.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Skewness of the distribution.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def skewness(self):
+    r&#34;&#34;&#34;Returns the skewness of the distribution.
+
+
+    Returns
+    -------
+    float
+        Skewness of the distribution.
+        
+    &#34;&#34;&#34;               
+    EX3 = (self.xk**3)@self.pk
+    mu = self.mean()
+    sigma = self.std()
+    return (EX3-3*mu*sigma**2-mu**3)/(sigma**3)</code></pre>
+</details>
+</dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.std"><code class="name flex">
 <span>def <span class="ident">std</span></span>(<span>self)</span>
 </code></dt>
@@ -4444,6 +5000,49 @@ This distribution object is therefore changed.</p>
     return</code></pre>
 </details>
 </dd>
+<dt id="discreteTimeAnalysis.DiscreteDistribution.tvd"><code class="name flex">
+<span>def <span class="ident">tvd</span></span>(<span>self, other)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the total variation distance of the two distributions.</p>
+<p>Computes the total variation distance: <a href="https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures">Wikipedia: Total variation distance</a></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>other</code></strong> :&ensp;<code><a title="discreteTimeAnalysis.DiscreteDistribution" href="#discreteTimeAnalysis.DiscreteDistribution">DiscreteDistribution</a></code></dt>
+<dd>The other distribution.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Total variation distance.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def tvd(self, other ):
+    r&#34;&#34;&#34;Returns the total variation distance of the two distributions.
+    
+    Computes the total variation distance: [Wikipedia: Total variation distance](https://en.wikipedia.org/wiki/Total_variation_distance_of_probability_measures)
+            
+    Parameters
+    ----------
+    other : DiscreteDistribution
+        The other distribution.
+
+    Returns
+    -------
+    float
+        Total variation distance.
+                
+    &#34;&#34;&#34;                
+    xmin = min(self.xmin, other.xmin)
+    xmax = max(self.xmax, other.xmax)
+    x = np.arange(xmin, xmax+1, dtype=int)
+                    
+    return np.sum(np.abs(self.pmf(x)-other.pmf(x)))/2</code></pre>
+</details>
+</dd>
 <dt id="discreteTimeAnalysis.DiscreteDistribution.var"><code class="name flex">
 <span>def <span class="ident">var</span></span>(<span>self)</span>
 </code></dt>
@@ -4482,6 +5081,7 @@ This distribution object is therefore changed.</p>
 <ul>
 <li><a href="#example">Example</a></li>
 <li><a href="#operators">Operators</a></li>
+<li><a href="#distance-metrics">Distance metrics</a></li>
 <li><a href="#notes">Notes</a></li>
 </ul>
 </div>
@@ -4526,8 +5126,12 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.convNeg" href="#discreteTimeAnalysis.DiscreteDistribution.convNeg">convNeg</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.cx" href="#discreteTimeAnalysis.DiscreteDistribution.cx">cx</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.describe" href="#discreteTimeAnalysis.DiscreteDistribution.describe">describe</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.emd" href="#discreteTimeAnalysis.DiscreteDistribution.emd">emd</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.entropy" href="#discreteTimeAnalysis.DiscreteDistribution.entropy">entropy</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.jsd" href="#discreteTimeAnalysis.DiscreteDistribution.jsd">jsd</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.mean" href="#discreteTimeAnalysis.DiscreteDistribution.mean">mean</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.mode" href="#discreteTimeAnalysis.DiscreteDistribution.mode">mode</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.normalize" href="#discreteTimeAnalysis.DiscreteDistribution.normalize">normalize</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.pi0" href="#discreteTimeAnalysis.DiscreteDistribution.pi0">pi0</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.pi_op" href="#discreteTimeAnalysis.DiscreteDistribution.pi_op">pi_op</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.plotCDF" href="#discreteTimeAnalysis.DiscreteDistribution.plotCDF">plotCDF</a></code></li>
@@ -4537,10 +5141,12 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.rvs" href="#discreteTimeAnalysis.DiscreteDistribution.rvs">rvs</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.sigmaTakeGEQ" href="#discreteTimeAnalysis.DiscreteDistribution.sigmaTakeGEQ">sigmaTakeGEQ</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.sigmaTakeLT" href="#discreteTimeAnalysis.DiscreteDistribution.sigmaTakeLT">sigmaTakeLT</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.skewness" href="#discreteTimeAnalysis.DiscreteDistribution.skewness">skewness</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.std" href="#discreteTimeAnalysis.DiscreteDistribution.std">std</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.trim" href="#discreteTimeAnalysis.DiscreteDistribution.trim">trim</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.trimCDF" href="#discreteTimeAnalysis.DiscreteDistribution.trimCDF">trimCDF</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.trimPMF" href="#discreteTimeAnalysis.DiscreteDistribution.trimPMF">trimPMF</a></code></li>
+<li><code><a title="discreteTimeAnalysis.DiscreteDistribution.tvd" href="#discreteTimeAnalysis.DiscreteDistribution.tvd">tvd</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DiscreteDistribution.var" href="#discreteTimeAnalysis.DiscreteDistribution.var">var</a></code></li>
 </ul>
 </li>
