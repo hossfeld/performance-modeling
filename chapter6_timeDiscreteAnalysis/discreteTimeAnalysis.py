@@ -834,10 +834,14 @@ def pi0(A, name=None):
     """ 
     return A.pi0(name=name)    
 
-oldmax = max    
+__oldmax = max    
 def max(*args):    
     r"""Returns the maximum of the random variables. 
         
+    The maximum function is overloaded, such that the maximum of random variables can be directly computed and is returned.
+    
+    In case, the first argument is a `DiscreteDistribution` and the second argument is an integer, the maximum between the random variable and 
+    a deterministic random variable is computed. This corresponds to the application of the pi-operator.
     The pi-operator means the maximum of the random variable and the value m. 
     The random variable A is passed as first parameter `A=args[0]` and m is passed as second parameter `m=args[1]`.
     The following two expressions are identical: `max` and `pi_op`.
@@ -858,8 +862,7 @@ def max(*args):
     Returns
     -------
     DiscreteDistribution
-        Returns the conditional distribution for which the condition (applied to `xk`) is true. 
-        The resulting distribution is normalized if the paraemter `normalized` is true.
+        Returns the maximum of the random variables. 
 
     Example
     -------    
@@ -893,8 +896,49 @@ def max(*args):
     elif len(args) == 2 and isinstance(args[0],DiscreteDistribution) and isinstance(args[1], int):
         return pi_op(args[0], args[1])
     else:
-        return oldmax(*args)
+        return __oldmax(*args)
     
+
+__oldmin = min
+def min(*args):    
+    r"""Returns the minimum of the random variables. 
+        
+    The minimum function is overloaded, such that the minimum of random variables can be directly computed and a `DiscreteDistribution` is returned.
+        
+    
+    Parameters
+    ----------
+    *args: 
+        Variable length argument list. If all variables are `DiscreteDistribution`, then the minimum of the 
+        random variables is returned.                 
+    
+    Returns
+    -------
+    DiscreteDistribution
+        Returns the minimum of the random variables. 
+
+    Example
+    -------    
+    >>> A = DU(0,4)
+    >>> B = max(A,3)
+    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
+    
+    """ 
+    bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
+    if all(bools):
+        xmax = max([Ai.xmax for Ai in args])
+        xmin = min([Ai.xmin for Ai in args])
+        x = np.arange(xmin, xmax+1, dtype=int)
+        ccdfs = np.zeros( (len(args),len(x)) )
+        for i,Ai in enumerate(args):
+            ccdfs[i,:] = 1-Ai.cdf(x)
+        
+        myccdf = np.prod( ccdfs, axis=0)
+        mycdf = 1-myccdf
+        mypmf = np.diff(np.insert(mycdf,0,0))
+        return DiscreteDistribution(x,mypmf.clip(0,1))
+    else:
+        return __oldmin(*args)
 
 def conv(A,B,name=None):
     r"""Returns the sum of the random variables A+B using convolution operator.
