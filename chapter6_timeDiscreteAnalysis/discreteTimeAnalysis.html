@@ -996,9 +996,8 @@ def min(*args):
     Example
     -------    
     &gt;&gt;&gt; A = DU(0,4)
-    &gt;&gt;&gt; B = max(A,3)
-    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
-    
+    &gt;&gt;&gt; B = DET(2)
+    discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     &#34;&#34;&#34; 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
     if all(bools):
@@ -2392,8 +2391,8 @@ random variables is returned.</dd>
 </dl>
 <h2 id="example">Example</h2>
 <pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
-&gt;&gt;&gt; B = max(A,3)
-pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
+&gt;&gt;&gt; B = DET(2)
+discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]
 </code></pre></div>
 <details class="source">
 <summary>
@@ -2419,9 +2418,8 @@ pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
     Example
     -------    
     &gt;&gt;&gt; A = DU(0,4)
-    &gt;&gt;&gt; B = max(A,3)
-    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
-    
+    &gt;&gt;&gt; B = DET(2)
+    discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     &#34;&#34;&#34; 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
     if all(bools):

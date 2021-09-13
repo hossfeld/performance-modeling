@@ -920,9 +920,8 @@ def min(*args):
     Example
     -------    
     >>> A = DU(0,4)
-    >>> B = max(A,3)
-    pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
-    
+    >>> B = DET(2)
+    discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]    
     """ 
     bools = [isinstance(Ai, DiscreteDistribution) for Ai in args]
     if all(bools):
