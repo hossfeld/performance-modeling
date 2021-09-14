@@ -40,7 +40,7 @@ Würzburg University Press. <br>
 In the example, we consider the sum of two random variables, which requires the convolution of the corresponding probability mass functions.
 The r.v. A follows a discrete uniform distribution in the range [0;10], while the r.v. B follows a negative binomial distribution,
 which is defined through the mean and the coefficient of variation.</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
+<pre><code class="python-repl">&gt;&gt;&gt; import discreteTimeAnalysis as dt
 &gt;&gt;&gt; A = dt.DU(a=0, b=10) % A ~ DU(0,10)
 &gt;&gt;&gt; EX, cX = 2.0, 1.5   % mean EX and coefficient of variation cX
 &gt;&gt;&gt; B = dt.NEGBIN(EX, cX) % negative binomial distribution
@@ -61,15 +61,21 @@ The two statements are identical: <code>-A+B</code> and <code>B-A</code>, if bot
 <p><code>&lt;=</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &lt;= B.mean()</code></p>
 <p><code>&gt;</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &gt; B.mean()</code></p>
 <p><code>&gt;=</code> operator: The comparison is done based on means. Returns true if <code>A.mean() &gt;= B.mean()</code></p>
-<p>'==' operator: The comparison is done based on means. For the equality comparison, the
+<p><code>==</code> operator: The comparison is done based on means. For the equality comparison, the
 threshold value <code><a title="discreteTimeAnalysis.comparisonEQ_eps" href="#discreteTimeAnalysis.comparisonEQ_eps">comparisonEQ_eps</a></code> is used for numerical reasons.
 Returns true if <code>abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps</code>. This allows a compact
 implementation of the power method.</p>
-<p>'!=' operator: The comparison is done based on means. For the equality comparison, the
+<p><code>!=</code> operator: The comparison is done based on means. For the equality comparison, the
 threshold value <code><a title="discreteTimeAnalysis.comparisonEQ_eps" href="#discreteTimeAnalysis.comparisonEQ_eps">comparisonEQ_eps</a></code> is used for numerical reasons.
 Returns true if <code>abs( A.mean() - B.mean() ) &gt; comparisonEQ_eps</code>. This allows a compact
 implementation of the power method.</p>
-<p>'|' operator: This operator is used as a shortcut for <code><a title="discreteTimeAnalysis.DiscreteDistribution.conditionalRV" href="#discreteTimeAnalysis.DiscreteDistribution.conditionalRV">DiscreteDistribution.conditionalRV()</a></code> which returns a conditional random variable.</p>
+<p><code>|</code> operator: This operator is used as a shortcut for <code><a title="discreteTimeAnalysis.DiscreteDistribution.conditionalRV" href="#discreteTimeAnalysis.DiscreteDistribution.conditionalRV">DiscreteDistribution.conditionalRV()</a></code> which returns a conditional random variable.</p>
+<p><code>[]</code> operator: This provides the pmf on the passed argument. <code>A[x]</code> is a shortcut for <code>A.pmf(x)</code>. </p>
+<h2 id="overloaded-functions">Overloaded Functions</h2>
+<p><code>len(A)</code>: returns the length of the support of this distribution, i.e. the number of positive probabilities.</p>
+<p><code>abs(A)</code>: returns a discrete distribution considering the absolute value of the distribution and summing up the probabilities (for negative and positive values).</p>
+<p><code>max(**args)</code>: returns the maximum of random variables for variable number of input distributions, e.g. max(A1,A2,A3). See <code><a title="discreteTimeAnalysis.max" href="#discreteTimeAnalysis.max">max()</a></code>.</p>
+<p><code>min(**args)</code>: returns the minimum of random variables for variable number of input distributions, e.g. min(A1,A2,A3). See <code><a title="discreteTimeAnalysis.min" href="#discreteTimeAnalysis.min">min()</a></code>.</p>
 <h2 id="distance-metrics">Distance Metrics</h2>
 <p>The distance between two discrete distributions is available: Jensen-Shannon distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.jsd" href="#discreteTimeAnalysis.DiscreteDistribution.jsd">DiscreteDistribution.jsd()</a></code>;
 total variation distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.tvd" href="#discreteTimeAnalysis.DiscreteDistribution.tvd">DiscreteDistribution.tvd()</a></code>; earth mover's distance <code><a title="discreteTimeAnalysis.DiscreteDistribution.emd" href="#discreteTimeAnalysis.DiscreteDistribution.emd">DiscreteDistribution.emd()</a></code>.</p>
@@ -134,17 +140,29 @@ The two statements are identical: `-A+B` and `B-A`, if both are discrete distrib
 
 `&gt;=` operator: The comparison is done based on means. Returns true if `A.mean() &gt;= B.mean()`
 
-&#39;==&#39; operator: The comparison is done based on means. For the equality comparison, the
+`==` operator: The comparison is done based on means. For the equality comparison, the
 threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
 Returns true if `abs( A.mean() - B.mean() ) &lt;= comparisonEQ_eps`. This allows a compact
 implementation of the power method.
 
-&#39;!=&#39; operator: The comparison is done based on means. For the equality comparison, the
+`!=` operator: The comparison is done based on means. For the equality comparison, the
 threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
 Returns true if `abs( A.mean() - B.mean() ) &gt; comparisonEQ_eps`. This allows a compact
 implementation of the power method.
 
-&#39;|&#39; operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+`|` operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+
+`[]` operator: This provides the pmf on the passed argument. `A[x]` is a shortcut for `A.pmf(x)`. 
+
+Overloaded functions
+--------------------
+`len(A)`: returns the length of the support of this distribution, i.e. the number of positive probabilities.
+
+`abs(A)`: returns a discrete distribution considering the absolute value of the distribution and summing up the probabilities (for negative and positive values).
+
+`max(**args)`: returns the maximum of random variables for variable number of input distributions, e.g. max(A1,A2,A3). See `max()`.
+
+`min(**args)`: returns the minimum of random variables for variable number of input distributions, e.g. min(A1,A2,A3). See `min()`.
 
 Distance metrics
 ----------------
@@ -164,6 +182,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import time
+import numbers
 
 comparisonEQ_eps = 1e-6
 &#34;&#34;&#34;The variable is used for the numerical comparison of two random variables `A`and `B`. 
@@ -1056,6 +1075,31 @@ class DiscreteDistribution:
     def __ne__(self, other):                        
         return abs(self.mean()-other.mean())&gt;comparisonEQ_eps
     
+    # returns the number of positive numbers
+    def __len__(self):
+        return len(self.pk&gt;0)
+    
+    # A**k
+    def __pow__(self, other):
+        if isinstance(other, numbers.Number):
+            return DiscreteDistribution(self.xk**other, self.pk)
+        else:
+            raise NotImplementedError
+    
+    # A[x] == A.pmf(x)
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            return self.pmf(np.array(key))
+        elif isinstance(key, int):
+            return self.pmf(key)[0]
+        else:
+            return self.pmf(key)
+        
+    # abs(A)
+    def __abs__(self):
+        pk = np.bincount(abs(self.xk), weights=self.pk)
+        return DiscreteDistribution(np.arange(len(pk)),pk)
+            
     def __getExtendedRangeDist(self, xmin, xmax):
         end = np.zeros(xmax-self.xmax) if self.xmax &lt; xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin &gt; xmin else []    
@@ -1201,6 +1245,26 @@ def min(*args):
         return DiscreteDistribution(x,mypmf.clip(0,1))
     else:
         return __oldmin(*args)
+
+
+def E(A):
+    r&#34;&#34;&#34;Returns the expected value of the random variables A.
+    
+    Example
+    -------
+    We can compute the variance: \(VAR[A]=E[A^2]-E[A]^2\) with the following syntax:
+        
+    &gt;&gt;&gt; A = DU(1,5)
+    &gt;&gt;&gt; E(A**2)-E(A)**2
+    2.0
+    &gt;&gt;&gt; A.var()
+    2.0
+    
+    See also
+    ----------
+    `DiscreteDistribution.mean`
+    &#34;&#34;&#34;        
+    return A.mean()
 
 def conv(A,B,name=None):
     r&#34;&#34;&#34;Returns the sum of the random variables A+B using convolution operator.
@@ -1690,11 +1754,7 @@ def MIX(A, w=None, name=None):
         iA = np.searchsorted(xk, Ai.xk, side=&#39;left&#39;)
         pk[iA] += Ai.pk*wi
     s = &#39;MIX&#39; if name is None else name   
-    return DiscreteDistribution(xk, pk, name=s)
-
-#%%
-A = DU(1,5)
-B = DET(4)</code></pre>
+    return DiscreteDistribution(xk, pk, name=s)</code></pre>
 </details>
 </section>
 <section>
@@ -1923,6 +1983,45 @@ a Bernoulli experiment is repeated N-times with success probability p.</p>
     n = b-a+1
     pk = 1.0/n
     return DiscreteDistribution(xk, np.array([pk]*n), name=s)    </code></pre>
+</details>
+</dd>
+<dt id="discreteTimeAnalysis.E"><code class="name flex">
+<span>def <span class="ident">E</span></span>(<span>A)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the expected value of the random variables A.</p>
+<h2 id="example">Example</h2>
+<p>We can compute the variance: <span><span class="MathJax_Preview">VAR[A]=E[A^2]-E[A]^2</span><script type="math/tex">VAR[A]=E[A^2]-E[A]^2</script></span> with the following syntax:</p>
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU(1,5)
+&gt;&gt;&gt; E(A**2)-E(A)**2
+2.0
+&gt;&gt;&gt; A.var()
+2.0
+</code></pre>
+<h2 id="see-also">See Also</h2>
+<p><code><a title="discreteTimeAnalysis.DiscreteDistribution.mean" href="#discreteTimeAnalysis.DiscreteDistribution.mean">DiscreteDistribution.mean()</a></code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def E(A):
+    r&#34;&#34;&#34;Returns the expected value of the random variables A.
+    
+    Example
+    -------
+    We can compute the variance: \(VAR[A]=E[A^2]-E[A]^2\) with the following syntax:
+        
+    &gt;&gt;&gt; A = DU(1,5)
+    &gt;&gt;&gt; E(A**2)-E(A)**2
+    2.0
+    &gt;&gt;&gt; A.var()
+    2.0
+    
+    See also
+    ----------
+    `DiscreteDistribution.mean`
+    &#34;&#34;&#34;        
+    return A.mean()</code></pre>
 </details>
 </dd>
 <dt id="discreteTimeAnalysis.GEOM"><code class="name flex">
@@ -2195,12 +2294,12 @@ A random variable $A$ is now constructed in such a way that with the probability
 <dd>Returns a shifted geometric distribution with mean EX.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DET(4)
+<pre><code class="python-repl">&gt;&gt;&gt; A = DET(4)
 &gt;&gt;&gt; B = DU(1,10)
 &gt;&gt;&gt; C = MIX( (A,B) )
 &gt;&gt;&gt; D = A+B
 </code></pre>
-<pre><code class="language-python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
+<pre><code class="python-repl">&gt;&gt;&gt; plt.figure(1, clear=True)
 &gt;&gt;&gt; A.plotCDF(label='A')
 &gt;&gt;&gt; B.plotCDF(label='B')
 &gt;&gt;&gt; C.plotCDF(label='MIX')
@@ -2657,13 +2756,13 @@ The random variable is passed as first parameter and m is passed as second param
 <dd>Returns the maximum of the random variables.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; max(A, DET(3))
 discrete distr.: xk=[0,1,2,3,4], pk=[0. ,0. ,0. ,0.8,0.2]
 
 </code></pre>
 <h2 id="example_1">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = max(A,3)
 pi_3(DU(0,4)): xk=[3,4], pk=[0.8,0.2]
 </code></pre>
@@ -2755,7 +2854,7 @@ random variables is returned.</dd>
 <dd>Returns the minimum of the random variables.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU(0,4)
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU(0,4)
 &gt;&gt;&gt; B = DET(2)
 &gt;&gt;&gt; min(A,B)
 discrete distr.: xk=[0,1,2,3,4], pk=[0.2,0.2,0.6,0. ,0. ]
@@ -3817,6 +3916,31 @@ distribution which is used when printing an instance of the class, see e.g.
     def __ne__(self, other):                        
         return abs(self.mean()-other.mean())&gt;comparisonEQ_eps
     
+    # returns the number of positive numbers
+    def __len__(self):
+        return len(self.pk&gt;0)
+    
+    # A**k
+    def __pow__(self, other):
+        if isinstance(other, numbers.Number):
+            return DiscreteDistribution(self.xk**other, self.pk)
+        else:
+            raise NotImplementedError
+    
+    # A[x] == A.pmf(x)
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            return self.pmf(np.array(key))
+        elif isinstance(key, int):
+            return self.pmf(key)[0]
+        else:
+            return self.pmf(key)
+        
+    # abs(A)
+    def __abs__(self):
+        pk = np.bincount(abs(self.xk), weights=self.pk)
+        return DiscreteDistribution(np.arange(len(pk)),pk)
+            
     def __getExtendedRangeDist(self, xmin, xmax):
         end = np.zeros(xmax-self.xmax) if self.xmax &lt; xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin &gt; xmin else []    
@@ -4002,7 +4126,7 @@ The operator <code>+</code> is overloaded for that class, such that <code>A+B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.conv(A) # returns A+A
 &gt;&gt;&gt; DiscreteDistribution.conv(A,A) # returns A+A
 &gt;&gt;&gt; A+A # returns A+A
@@ -4064,7 +4188,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 <dd>Name of the distribution for string representation.</dd>
 </dl>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A = DU()
+<pre><code class="python-repl">&gt;&gt;&gt; A = DU()
 &gt;&gt;&gt; A.convNeg(A) # returns A-A
 &gt;&gt;&gt; DiscreteDistribution.convNeg(A,A) # returns A-A
 &gt;&gt;&gt; A-A # returns A-A
@@ -4146,7 +4270,7 @@ The operator <code>-</code> is overloaded for that class, such that <code>A-B</c
 </p>
 <p>This method prints basic characteristics of the distribution.</p>
 <h2 id="example">Example</h2>
-<pre><code class="language-python-repl">&gt;&gt;&gt; A.describe()
+<pre><code class="python-repl">&gt;&gt;&gt; A.describe()
     interarrival_time: EX=5.5000, cX=0.5222, mode=1
 </code></pre></div>
 <details class="source">
@@ -5255,6 +5379,7 @@ This distribution object is therefore changed.</p>
 <ul>
 <li><a href="#example">Example</a></li>
 <li><a href="#operators">Operators</a></li>
+<li><a href="#overloaded-functions">Overloaded functions</a></li>
 <li><a href="#distance-metrics">Distance metrics</a></li>
 <li><a href="#notes">Notes</a></li>
 </ul>
@@ -5271,6 +5396,7 @@ This distribution object is therefore changed.</p>
 <li><code><a title="discreteTimeAnalysis.BINOM" href="#discreteTimeAnalysis.BINOM">BINOM</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DET" href="#discreteTimeAnalysis.DET">DET</a></code></li>
 <li><code><a title="discreteTimeAnalysis.DU" href="#discreteTimeAnalysis.DU">DU</a></code></li>
+<li><code><a title="discreteTimeAnalysis.E" href="#discreteTimeAnalysis.E">E</a></code></li>
 <li><code><a title="discreteTimeAnalysis.GEOM" href="#discreteTimeAnalysis.GEOM">GEOM</a></code></li>
 <li><code><a title="discreteTimeAnalysis.GEOM0" href="#discreteTimeAnalysis.GEOM0">GEOM0</a></code></li>
 <li><code><a title="discreteTimeAnalysis.GEOM1" href="#discreteTimeAnalysis.GEOM1">GEOM1</a></code></li>

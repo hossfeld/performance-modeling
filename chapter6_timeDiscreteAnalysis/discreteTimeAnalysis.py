@@ -51,17 +51,29 @@ The two statements are identical: `-A+B` and `B-A`, if both are discrete distrib
 
 `>=` operator: The comparison is done based on means. Returns true if `A.mean() >= B.mean()`
 
-'==' operator: The comparison is done based on means. For the equality comparison, the
+`==` operator: The comparison is done based on means. For the equality comparison, the
 threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
 Returns true if `abs( A.mean() - B.mean() ) <= comparisonEQ_eps`. This allows a compact
 implementation of the power method.
 
-'!=' operator: The comparison is done based on means. For the equality comparison, the
+`!=` operator: The comparison is done based on means. For the equality comparison, the
 threshold value `discreteTimeAnalysis.comparisonEQ_eps` is used for numerical reasons. 
 Returns true if `abs( A.mean() - B.mean() ) > comparisonEQ_eps`. This allows a compact
 implementation of the power method.
 
-'|' operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+`|` operator: This operator is used as a shortcut for `DiscreteDistribution.conditionalRV` which returns a conditional random variable.
+
+`[]` operator: This provides the pmf on the passed argument. `A[x]` is a shortcut for `A.pmf(x)`. 
+
+Overloaded functions
+--------------------
+`len(A)`: returns the length of the support of this distribution, i.e. the number of positive probabilities.
+
+`abs(A)`: returns a discrete distribution considering the absolute value of the distribution and summing up the probabilities (for negative and positive values).
+
+`max(**args)`: returns the maximum of random variables for variable number of input distributions, e.g. max(A1,A2,A3). See `max()`.
+
+`min(**args)`: returns the minimum of random variables for variable number of input distributions, e.g. min(A1,A2,A3). See `min()`.
 
 Distance metrics
 ----------------
@@ -81,6 +93,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import time
+import numbers
 
 comparisonEQ_eps = 1e-6
 """The variable is used for the numerical comparison of two random variables `A`and `B`. 
@@ -973,6 +986,31 @@ class DiscreteDistribution:
     def __ne__(self, other):                        
         return abs(self.mean()-other.mean())>comparisonEQ_eps
     
+    # returns the number of positive numbers
+    def __len__(self):
+        return len(self.pk>0)
+    
+    # A**k
+    def __pow__(self, other):
+        if isinstance(other, numbers.Number):
+            return DiscreteDistribution(self.xk**other, self.pk)
+        else:
+            raise NotImplementedError
+    
+    # A[x] == A.pmf(x)
+    def __getitem__(self, key):
+        if isinstance(key, tuple):
+            return self.pmf(np.array(key))
+        elif isinstance(key, int):
+            return self.pmf(key)[0]
+        else:
+            return self.pmf(key)
+        
+    # abs(A)
+    def __abs__(self):
+        pk = np.bincount(abs(self.xk), weights=self.pk)
+        return DiscreteDistribution(np.arange(len(pk)),pk)
+            
     def __getExtendedRangeDist(self, xmin, xmax):
         end = np.zeros(xmax-self.xmax) if self.xmax < xmax else []
         start = np.zeros(self.xmin-xmin) if self.xmin > xmin else []    
@@ -1118,6 +1156,26 @@ def min(*args):
         return DiscreteDistribution(x,mypmf.clip(0,1))
     else:
         return __oldmin(*args)
+
+
+def E(A):
+    r"""Returns the expected value of the random variables A.
+    
+    Example
+    -------
+    We can compute the variance: \(VAR[A]=E[A^2]-E[A]^2\) with the following syntax:
+        
+    >>> A = DU(1,5)
+    >>> E(A**2)-E(A)**2
+    2.0
+    >>> A.var()
+    2.0
+    
+    See also
+    ----------
+    `DiscreteDistribution.mean`
+    """        
+    return A.mean()
 
 def conv(A,B,name=None):
     r"""Returns the sum of the random variables A+B using convolution operator.
@@ -1608,7 +1666,3 @@ def MIX(A, w=None, name=None):
         pk[iA] += Ai.pk*wi
     s = 'MIX' if name is None else name   
     return DiscreteDistribution(xk, pk, name=s)
-
-#%%
-A = DU(1,5)
-B = DET(4)
