@@ -82,6 +82,7 @@ import warnings
 import random
 import importlib
 from scipy.linalg import expm
+from IPython.display import display, clear_output
 #import Constants as const
 #from collections import namedtuple
 #%%
@@ -1027,9 +1028,10 @@ class StateTransitionGraph(nx.DiGraph):
         
         return plt.gcf(), plt.gca(), pos
     
-    def animateSimulation(self, expectedTimePerState=1, **kwargs):
+    def animateSimulation(self, expectedTimePerState=1, inNotebook=False, **kwargs):
         """
         Animate a simulation trajectory through the state transition graph.
+        The animation of the CTMC simulation run either in a Jupyter notebook or as a regular script.
     
         This method visualizes the path of a simulated or predefined sequence of states by
         temporarily highlighting each visited state over time. The time spent in each state
@@ -1037,12 +1039,16 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        expectedTimePerState : float, optional
+        - `expectedTimePerState` : float, optional
             Approximate duration (in seconds) for an average state visit in the animation.
             The actual pause duration for each state is scaled proportionally to its sojourn time.
             Default is 1 second.
+            
+        - `inNotebook` : bool, optional
+            If True, uses Jupyter-compatible animation (with display + clear_output).
+            If False, uses standard matplotlib interactive animation. Default is True.
     
-        **kwargs : dict
+        - `**kwargs` : dict
             Additional keyword arguments including:
                 - states : list
                     A list of visited states (nodes) to animate.
@@ -1090,17 +1096,22 @@ class StateTransitionGraph(nx.DiGraph):
         # Remove simulation-related keys before drawing
         draw_kwargs = {k: v for k, v in kwargs.items() if k not in {"states", "times", "startNode", "numEvents"}}
                 
-        gcf, ax, pos = self.drawTransitionGraph(**draw_kwargs)
-        plt.ion()
-        
+        fig, ax, pos = self.drawTransitionGraph(**draw_kwargs)
         plt.tight_layout()
         
+        if not inNotebook:
+            plt.ion()
+                                
         for node, time in zip(states,times):
-            
-            artist = nx.draw_networkx_nodes(self, pos, nodelist=[node],ax=ax,
-                                   node_color='red',
-                                   node_size=1000)
-            plt.draw()                        
+            if inNotebook:
+                clear_output(wait=True)
+                artist = nx.draw_networkx_nodes(self, pos, nodelist=[node], ax=ax,
+                                                node_color=self._const.COLOR_NODE_ANIMATION_HIGHLIGHT, node_size=1000)
+                display(fig)
+            else:
+                artist = nx.draw_networkx_nodes(self, pos, nodelist=[node],ax=ax,
+                                       node_color=self._const.COLOR_NODE_ANIMATION_HIGHLIGHT, node_size=1000)
+                plt.draw()                        
             plt.pause(time/avg_Time*expectedTimePerState)
             
             # Remove highlighted node    

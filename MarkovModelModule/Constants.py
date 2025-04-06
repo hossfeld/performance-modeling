@@ -17,6 +17,8 @@ COLOR_TRANSITIONS = {ARRIVAL: plt.cm.tab10(0),
 COLOR_NODE_DEFAULT = plt.cm.tab20(1) 
 COLOR_NODE_BLOCKING = plt.cm.tab20(7) 
 
+COLOR_NODE_ANIMATION_HIGHLIGHT = 'red'
+
 
 def savefig(fname, printLatex=False, returnLatex=True):    
     path = 'C:/git/2025-paperWithMarkovModel/figs/'
