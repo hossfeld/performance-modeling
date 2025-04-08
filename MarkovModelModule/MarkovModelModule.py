@@ -83,6 +83,11 @@ import random
 import importlib
 from scipy.linalg import expm
 from IPython.display import display, clear_output
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
+import matplotlib.colors as mcolors
+import pandas as pd
+import os
 #import Constants as const
 #from collections import namedtuple
 #%%
@@ -100,7 +105,7 @@ class StateTransitionGraph(nx.DiGraph):
 
     Parameters
     ----------
-    - `parameters` : dict  
+    - **parameters** : dict  
       A dictionary mapping parameter names to their numerical values.     
         Example: {'lambda': 1.0, 'mu': 1.0}. 
         For each parameter key:
@@ -109,7 +114,7 @@ class StateTransitionGraph(nx.DiGraph):
         - For the key="lambda", `G.lam` and `G.sym_lambda` are created
     
         The parameters can be accessed via property `parameters`
-    - `constants` : str, optional
+    - **constants** : str, optional
         The name of a Python module (as string) to import dynamically and assign to `self.const`.
         This can be used to store global or user-defined constants.
         Default is "Constants".
@@ -154,7 +159,7 @@ class StateTransitionGraph(nx.DiGraph):
 
         Parameters
         ----------
-        - `parameters` : dict  
+        - **parameters** : dict  
           A dictionary mapping parameter names to their numerical values.     
             Example: {'lambda': 1.0, 'mu': 1.0}. 
             For each parameter key:
@@ -163,7 +168,7 @@ class StateTransitionGraph(nx.DiGraph):
             - For the key="lambda", `G.lam` and `G.sym_lambda` are created
         
             The parameters can be accessed via property `parameters`
-        - `constants` : str, optional
+        - **constants** : str, optional
             The name of a Python module (as string) to import dynamically and assign to `self.const`.
             This can be used to store global or user-defined constants.
             Default is "Constants".
@@ -207,17 +212,17 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - state : hashable
+        - **state** : hashable
             The identifier for the state. Can be a string, int, or a tuple. If no label
             is provided, the label will be auto-generated as:
             - comma-separated string for tuples (e.g., `(1, 2)` -> `'1,2'`)
             - stringified value for other types
     
-        - color : str, optional
+        - **color** : str, optional
             The color assigned to the state (used for visualization).
             If not specified, defaults to `self.const.COLOR_NODE_DEFAULT`.
     
-        - label : str, optional
+        - **label** : str, optional
             A label for the node (used for display or annotation). If not provided,
             it will be auto-generated from the state identifier.
     
@@ -249,18 +254,18 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - state : hashable
+        - **state** : hashable
             Identifier of the state to update. Must be a node already present in the graph.
     
-        - color : str, optional
+        - **color** : str, optional
             Color assigned to the node, typically used for visualization. If not provided,
             the default node color (`self._const.COLOR_NODE_DEFAULT`) is used.
     
-        - label : str, optional
+        - **label** : str, optional
             Label for the node. If not provided, it is auto-generated from the state ID
             (especially for tuples).
     
-        - **kwargs : dict
+        - `**kwargs` : dict
             Arbitrary additional key-value pairs to set as node attributes. These can include
             any custom metadata.
     
@@ -293,7 +298,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        **kwargs : dict, optional
+        `**kwargs` : dict, optional
             Optional keyword arguments to apply uniformly to all nodes,
             such as color='gray', group='core', etc.
     
@@ -318,25 +323,25 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - origin_state : hashable
+        - **origin_state** : hashable
             The source node (state) of the transition.
     
-        - destination_state : hashable
+        - **destination_state** : hashable
             The target node (state) of the transition.
     
-        - sym_rate : sympy.Expr
+        - **sym_rate** : sympy.Expr
             A symbolic expression representing the transition rate.
             This will be numerically evaluated using internal substitutions (`self._subs`).
     
-        - tid : str or int, optional
+        - **tid** : str or int, optional
             A transition identifier (e.g. for grouping or styling).
             If provided, the color will default to `self._const.COLOR_TRANSITIONS[tid]` if not set explicitly.
     
-        - color : str, optional
+        - **color** : str, optional
             Color for the edge (used in visualization). Defaults to the transition-specific color
             if `tid` is provided.
     
-        - label : str, optional
+        - **label** : str, optional
             LaTeX-formatted string for labeling the edge. If not provided, a default label is
             generated using `sympy.latex(sym_rate)`.
     
@@ -372,12 +377,12 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        key : str
+        **key** : str
             The name of the parameter (e.g., 'lambda', 'mu', 'n').
     
         Returns
         -------
-        sympy.Symbol
+        **sympy.Symbol**
             The symbolic variable corresponding to the given key.
     
         Raises
@@ -407,7 +412,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Returns
         -------
-        dict
+        **dict**
             Dictionary of parameter names and their corresponding numeric values.
     
         Examples
@@ -434,7 +439,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Returns
         -------
-        numpy.ndarray or None
+        **numpy.ndarray** or None
             The rate matrix `Q`, where `Q[i, j]` is the transition rate from state `i` to `j`.
             Returns `None` if the rate matrix has not been computed yet.
     
@@ -458,7 +463,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Returns
         -------
-        dict or None
+        **dict** or None
             A dictionary mapping each state to its steady-state probability.
             Returns `None` if the probabilities have not yet been computed.
     
@@ -481,7 +486,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        state : hashable
+        **state** : hashable
             The source node (state) from which outgoing edges will be printed.            
     
         Returns
@@ -559,13 +564,13 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        verbose : bool, optional
+        `verbose` : bool, optional
             If True, prints the rate matrix, the modified matrix, the right-hand side vector,
             and the resulting steady-state probabilities.
     
         Returns
         -------
-        probs : dict
+        **probs** : dict
             A dictionary mapping each state (node in the graph) to its steady-state probability.
     
         Notes
@@ -665,19 +670,19 @@ class StateTransitionGraph(nx.DiGraph):
         
         Parameters
         ----------
-        - startNode : hashable, optional
+        - **startNode** : hashable, optional
             The node at which the simulation starts. If not specified, the first node in the graph
             (based on insertion order) is used.
         
-        - numEvents : int, optional
+        - **numEvents** : int, optional
             The number of transition events (steps) to simulate. Default is 10.
         
         Returns
         -------
-        states : list
+        **states** : list
             A list of visited states, representing the sequence of nodes traversed in the simulation.
         
-        times : numpy.ndarray
+        **times** : numpy.ndarray
             An array of dwell times in each state, sampled from exponential distributions
             with rate equal to the sum of outgoing transition rates from each state.
         
@@ -731,14 +736,14 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - states : list of tuple
+        - **states** : list of tuple
             A list of state identifiers visited during the simulation.    
-        - times : numpy.ndarray
+        - **times** : numpy.ndarray
             An array of sojourn times corresponding to each visited state, same length as `states`.
     
         Returns
         -------
-        simProbs : dict
+        **simProbs** : dict
             A dictionary mapping each unique state to its estimated empirical probability,
             based on total time spent in that state relative to the simulation duration.
     
@@ -940,53 +945,53 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        pos : dict, optional
+        - pos : dict, optional
             A dictionary mapping nodes to positions. If None, a Kamada-Kawai layout is used.
     
-        bended : bool, optional
+        - bended : bool, optional
             If True, edges are drawn with curvature using arcs. Useful for distinguishing
             bidirectional transitions. Default is False.
     
-        node_size : int, optional
+        - node_size : int, optional
             Size of the nodes in the plot. Default is 1000.
     
-        num : int, optional
+        - num : int, optional
             Figure number for matplotlib (useful for managing multiple figures). Default is 1.
     
-        rad : float, optional
+        - rad : float, optional
             The curvature radius for bended edges. Only used if `bended=True`. Default is -0.2.
     
-        edge_labels : dict, optional
+        - edge_labels : dict, optional
             Optional dictionary mapping edges `(u, v)` to labels. If None, the `'label'`
             attribute from each edge is used.
     
-        node_shapes : str, optional
+        - node_shapes : str, optional
             Shape of the nodes (e.g., `'o'` for circle, `'s'` for square). Default is `'o'`.
     
-        figsize : tuple, optional
+        - figsize : tuple, optional
             Size of the matplotlib figure. Default is (14, 7).
     
-        clear : bool, optional
+        - clear : bool, optional
             If True, clears the figure before plotting. Default is True.
     
-        fontsize : int, optional
+        - fontsize : int, optional
             Font size used for node labels. Default is 10.
     
-        fontcolor : str, optional
+        - fontcolor : str, optional
             Font color for node labels. Default is `'black'`.
     
-        label_pos : float, optional
+        - label_pos : float, optional
             Position of edge labels along the edge (0=start, 1=end). Default is 0.75.
     
         Returns
         -------
-        fig : matplotlib.figure.Figure
+        - fig : matplotlib.figure.Figure
             The created matplotlib figure object.
     
-        ax : matplotlib.axes.Axes
+        - ax : matplotlib.axes.Axes
             The axes object where the graph is drawn.
     
-        pos : dict
+        - pos : dict
             The dictionary of node positions used for drawing.
     
         Notes
@@ -1039,12 +1044,12 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - `expectedTimePerState` : float, optional
+        - **expectedTimePerState** : float, optional
             Approximate duration (in seconds) for an average state visit in the animation.
             The actual pause duration for each state is scaled proportionally to its sojourn time.
             Default is 1 second.
             
-        - `inNotebook` : bool, optional
+        - **inNotebook** : bool, optional
             If True, uses Jupyter-compatible animation (with display + clear_output).
             If False, uses standard matplotlib interactive animation. Default is True.
     
@@ -1131,13 +1136,13 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        data : bool, optional
+        **data** : bool, optional
             If True, returns a view of `(node, attribute_dict)` pairs.
             If False (default), returns a view of node identifiers only.
     
         Returns
         -------
-        networkx.classes.reportviews.NodeView or NodeDataView
+        *networkx.classes.reportviews.NodeView* or NodeDataView
             A view over the graph’s nodes or `(node, data)` pairs, depending on the `data` flag.
     
         Examples
@@ -1162,10 +1167,10 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        state : hashable
+        **state** : hashable
             The identifier of the state whose color is to be updated.
     
-        color : str
+        **color** : str
             The new color to assign to the state (used for visualization).
     
         Returns
@@ -1181,10 +1186,10 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        state : hashable
+        **state** : hashable
             The identifier of the state whose label is to be updated.
     
-        label : str
+        **label** : str
             The new label to assign to the state (used for visualization or annotation).
     
         Returns
@@ -1199,12 +1204,12 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        state : hashable
+        **state** : hashable
             The identifier of the state whose probability is to be retrieved.
     
         Returns
         -------
-        float
+        **float**
             The steady-state probability of the specified state.
     
         Raises
@@ -1221,7 +1226,7 @@ class StateTransitionGraph(nx.DiGraph):
     
         Returns
         -------
-        dict
+        **dict**
             A dictionary mapping each state to its steady-state probability.
     
         Notes
@@ -1241,13 +1246,13 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        state : hashable, optional
+        **state** : hashable, optional
             The state to initialize with probability 1. If None, the first node
             in the graph (based on insertion order) is used.
     
         Returns
         -------
-        dict
+        **dict**
             A dictionary representing the initial distribution over states.
             The selected state has probability 1, and all others have 0.
     
@@ -1280,16 +1285,16 @@ class StateTransitionGraph(nx.DiGraph):
     
         Parameters
         ----------
-        - `initialDistribution` : dict 
+        - **initialDistribution** : dict 
             A dictionary mapping states (nodes) to their initial probabilities at time `t=0`.
             The keys must match the nodes in the graph, and the values should sum to 1.    
             
-        - `t` : float
+        - **t** : float
             The time at which the transient distribution is to be evaluated.
     
         Returns
         -------
-        dict
+        **dict**
             A dictionary mapping each state (node) to its probability at time `t`.
     
         Notes
@@ -1333,11 +1338,11 @@ class StateTransitionGraph(nx.DiGraph):
     
         Returns
         -------
-        solution : dict
+        - **solution** : dict
             A symbolic solution dictionary mapping SymPy symbols (e.g., x_{A}) to
             expressions in terms of model parameters.
     
-        num_solution : dict
+        - **num_solution** : dict
             A numerical dictionary mapping each state (node) to its steady-state probability,
             computed by substituting the numeric values from `self._subs` into the symbolic solution.
     
@@ -1389,4 +1394,110 @@ class StateTransitionGraph(nx.DiGraph):
         num_dict = {s: num_solution[X[s]] for s in X}                
         
         return simplified_solution, num_dict 
+    
+    def exportTransitionsToExcel(self, excel_path = "output.xlsx", num_colors=9, open_excel=False, verbose=True):
+        """
+        Export transition data from the state transition graph to an Excel file.
+        
+        This method collects all transitions (edges) from the graph and writes them
+        to an Excel spreadsheet, optionally applying background colors to distinguish
+        outgoing transitions from different source states. This export is helpful for
+        manually verifying the transition structure of the model.
+
+        The transition type is defined by the `tid` field of each edge, and mapped to
+        a human-readable string via the `EXPORT_NAME_TRANSITIONS` dictionary in the
+        constants module (e.g., `Constants.EXPORT_NAME_TRANSITIONS[tid]`).
+
+        See Also
+        --------
+        StateTransitionGraph.addTransition : Method to add edges with symbolic rates and `tid`.
+        StateTransitionGraph.__init__ : Initializes the graph and loads the constants module.
+
+        Parameters
+        ----------
+        - **excel_path** : str, optional
+            Path to the output Excel file. Default is "output.xlsx".
+        
+        - num_colors : int, optional
+            Number of unique background colors to cycle through for different states.
+            Default is 9.
+        
+        - open_excel : bool, optional
+            If True, automatically opens the generated Excel file after export.
+            Default is False.
+        
+        - verbose : bool, optional
+            If True, prints summary information about the export process.
+            Default is True.
+        
+        Returns
+        -------
+        None
+            The function writes data to disk and optionally opens Excel,
+            but does not return a value.
+
+        Notes
+        -----
+        - Each edge must contain a `tid` attribute for transition type and a `label` for the rate.
+        - Background coloring groups all outgoing transitions from the same source state.
+        - Requires the constants module to define `EXPORT_NAME_TRANSITIONS`.
+        """
+
+        rows = []
+        for node in self.nodes():
+            edges = list(self.edges(node))
+            if verbose: print(f"Edges connected to node '{node}':")
+            
+            for i, (u, v) in enumerate(edges):
+                latex = self[u][v]["label"]
+                rate = sp.pretty(self[u][v]["sym_rate"])
+                tid = self[u][v]["tid"]
+                
+                if tid: # 
+                    if hasattr(self._const, 'EXPORT_NAME_TRANSITIONS'):
+                        tid_name = self._const.EXPORT_NAME_TRANSITIONS[tid]
+                    else:
+                        tid_name  = ''                               
+                
+                rows.append({"from": u, "type": tid_name, "to": v, "rate": rate, "latex": latex})
+            
+        df = pd.DataFrame(rows, columns=["from", "type", "to", "rate", "latex"])
+        df["checked"] = ""
+        df.to_excel(excel_path, index=False)
+        
+        # Load workbook with openpyxl
+        wb = load_workbook(excel_path)
+        ws = wb.active
+        
+        # Define colors for different "from" values
+        cmap = map(plt.cm.Pastel1, range(num_colors))
+        # Convert RGBA to hex
+        color_list = [mcolors.to_hex(color, keep_alpha=False).upper().replace("#", "") for color in cmap]
+        
+        # Assign color to each unique "from" value using modulo
+        unique_from = (df["from"].unique())  # Sorted for consistent order
+        from_color_map = {
+            value: color_list[i % len(color_list)] for i, value in enumerate(unique_from)
+        }
+        
+        # Apply coloring row by row
+        for i,row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row)):  # Skip header
+            from_value = row[0].value  # "from" is first column
+            #fill_color = color_list[i % len(color_list)]
+            if isinstance(from_value, int):
+                fill_color = from_color_map[from_value]
+            else:
+                fill_color = from_color_map.get(eval(from_value))
+            
+            if fill_color:
+                fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
+                for cell in row:
+                    cell.fill = fill
+        
+        # Save styled Excel file
+        wb.save(excel_path)
+        if verbose: print(f"File {excel_path} created.")
+        if open_excel: 
+            print(f"Opening the file {excel_path}.")
+            os.startfile(excel_path)
     
